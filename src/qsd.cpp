@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
   double T    = params.get("T", 10.0);      // Total simulation time
   double dt   = params.get("dt", 0.1);      // Timestep
   double D    = params.get("D", 0.0);       // Diffusion
-  string name = params.get("name", "One");  // Name 
+  string results_folder = params.get("results_folder", "results/One");  // Name 
 
   // params.dump();
   print_params(N, T, dt, d, wd, ws, D);
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
   double* li = initialize(N);
 
   // Initialize the queue
-  Queue q(li, N, d, wd, ws, D, name);
+  Queue q(li, N, d, wd, ws, D, results_folder);
 
   // Do the loop.
   do {

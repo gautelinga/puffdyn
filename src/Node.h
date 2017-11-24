@@ -8,14 +8,17 @@
 #include <fstream>
 #include <string>
 
-using namespace std;
-
 #ifndef __NODE_H
 #define __NODE_H
 
+class Queue;
+
+#include "Queue.h"
+using namespace std;
+
 class Node {
 public:
-  Node(double, string);
+  Node(double, Queue*);
   ~Node();
   void set_next(Node* a){ this->next_node = a; };
   void set_prev(Node* a){ this->prev_node = a; };
@@ -26,13 +29,14 @@ public:
   Node* split();
   void move(double);
   void dump(double);
+  Queue* get_queue(){ return queue; };
 private:
   double x;
   int id;
   Node* next_node;
   Node* prev_node;
   ofstream file;
-  string results_dir;
+  Queue* queue;
 };
 
 #endif

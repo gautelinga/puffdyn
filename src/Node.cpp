@@ -2,13 +2,13 @@
 
 int COUNT = 0;
 
-Node::Node(double x, string results_dir){
+Node::Node(double x, Queue* queue){
   cout << "Creating x=" << x << "!"  << endl;
   this->x = x;
   this->id = COUNT++;
 
-  this->results_dir = results_dir;
-  this->file.open(results_dir + to_string(this->id)+ ".dat", ofstream::out);
+  this->queue = queue;
+  this->file.open(this->queue->get_results_dir() + "/" + to_string(this->id)+ ".dat", ofstream::out);
 }
 
 Node::~Node(void){
@@ -38,7 +38,7 @@ Node* Node::decay(){
 
 Node* Node::split(){
   Node* n_prev = this->prev();
-  Node* n = new Node(this->x, this->results_dir);
+  Node* n = new Node(this->x, this->get_queue());
   n_prev->set_next(n);
   n->set_prev(n_prev);
   n->set_next(this);

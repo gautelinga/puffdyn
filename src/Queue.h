@@ -7,12 +7,15 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
-#include "Node.h"
-
-using namespace std;
+#include <cstdlib>
 
 #ifndef __QUEUE_H
 #define __QUEUE_H
+
+class Node;
+
+#include "Node.h"
+using namespace std;
 
 class Queue {
 public:
@@ -28,6 +31,7 @@ public:
   void set_first(Node*);
   void increase_size(){ ++queue_length; };
   void decrease_size(){ --queue_length; };
+  string get_results_dir(){ return results_dir; };
 private:
   Node* first;
   int queue_length;

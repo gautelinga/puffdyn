@@ -1,17 +1,45 @@
 #include "Queue.h"
+#include <stdio.h>
+#include <sys/stat.h>
+//#include <boost/filesystem/path.hpp>
+//#include <boost/filesystem/operations.hpp>
+//namespace fs = boost::filesystem;
 
+class Node;
+class Queue;
 
 Queue::Queue(double* li, int N, double d, double ws, double wd, double D, string results_dir){
   cout << "Creating queue!" << endl;
-  Node *n = new Node(li[0], results_dir);
+  Node *n = new Node(li[0], this);
   Node *n_prev, *n_first;
 
   this->results_dir = results_dir;
 
+  struct stat sb;
+  if (stat(results_dir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
+    string rm_code_str = "rm " + results_dir + "/*";
+    const char* rm_code = rm_code_str.c_str();
+    const int rm_err = system(rm_code);
+    if (rm_err == -1){
+      cout << "Couldn't empty folder!" << endl;
+      exit(0);
+    } 
+  }
+  else {
+    cout << "Creating directory: " << results_dir << endl;
+    string dir_code_str = "mkdir -p " + results_dir;
+    const char* dir_code = dir_code_str.c_str();
+    const int dir_err = system(dir_code);
+    if (dir_err == -1){
+      cout << "Couldn't create folder!" << endl;
+      exit(0);
+    }
+  }
+
   n_first = n;
   for (int i=1; i<N; ++i){
     n_prev = n;
-    n = new Node(li[i], results_dir);
+    n = new Node(li[i], this);
     n->set_prev(n_prev);
     n_prev->set_next(n);
   }
