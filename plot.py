@@ -13,12 +13,15 @@ def parse_args():
 def main():
     args = parse_args()
 
+    series = []
     for filename in glob.glob(args.folder + "/*"):
         data = np.loadtxt(filename)
         print filename
         t = data[:, 0]
         x = data[:, 1]
+        series.append((t, x))
 
+    for t, x in series:
         plt.plot(t, x, 'r')
     plt.show()
 
