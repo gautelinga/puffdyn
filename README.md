@@ -25,19 +25,21 @@ We start with a configuration of <img src="http://chart.apis.google.com/chart?ch
 The initial puffs are either equidistantly spaced according to the mean field ("mf") solution, or in a random order ("random").
 Then the model consists of solving the ODEs:
 <p align="center">
-  <img src="http://chart.apis.google.com/chart?cht=tx&chl=\frac{\mathrm{d}x_i}{\mathrm{d}t}=v(x_{i%2B1}-x_i)"/>,
+  <img src="http://chart.apis.google.com/chart?cht=tx&chl=\frac{\mathrm{d}x_i}{\mathrm{d}t}=v(x_{i%2B1}-x_i)%2B\sqrt{D}\xi_i(t)"/>,
 </p>
+
 in addition to having splitting and decay (removal) of puffs (i.e. nodes) in accordance with the above rates.
+Here, <img src="http://chart.apis.google.com/chart?cht=tx&chl=\xi_i(t)"/> is a Gaussian noise such that <img src="http://chart.apis.google.com/chart?cht=tx&chl=\langle\xi_i(t)\xi_j(t')\rangle=\delta_{ij}\delta(t-t')"/>, and <img src="http://chart.apis.google.com/chart?cht=tx&chl=D"/> is a diffusion coefficient.
 These are the equations of motion.
 
 ## Implementation
 The equations of motion are solved with a (limited) explicit Euler method:
 <p align="center">
-  <img src="http://chart.apis.google.com/chart?cht=tx&chl=\frac{\Delta{}x_i^*}{\Delta{}t}=v(x_{i%2B1}^k-x_i^k)"/>.
+  <img src="http://chart.apis.google.com/chart?cht=tx&chl={\Delta{}x_i^*}={\Delta{}t}v(x_{i%2B1}^k-x_i^k)%2B\sqrt{D\Delta{}t}N(0,1)"/>.
 </p>
 
-The spatial update <img src="http://chart.apis.google.com/chart?cht=tx&chl=\Delta{}x^{k%2B1}"/> is given by <img src="http://chart.apis.google.com/chart?cht=tx&chl=\Delta{}x_i^{k%2B1}=\max(0,\min(\Delta{}x_i^*,x_{i%2B1}-x_i))"/> (again subject to the periodic boundary condition).
-Then the update is <img src="http://chart.apis.google.com/chart?cht=tx&chl=x_{i%2B1}=x_i+\Delta{}x_i^{k%2B1}"/>.
+The spatial update <img src="http://chart.apis.google.com/chart?cht=tx&chl=\Delta{}x^{k%2B1}"/> is given by <img src="http://chart.apis.google.com/chart?cht=tx&chl=\Delta{}x_i^{k%2B1}=\max(0,\min(\Delta{}x_i^*,x_{i%2B1}^k-x_i^k))"/> (again subject to the periodic boundary condition).
+Then the update is <img src="http://chart.apis.google.com/chart?cht=tx&chl=x_{i%2B1}^{k%2B1}=x_i^{k%2B1}%2B\Delta{}x_i^{k%2B1}"/>.
 This is efficiently implemented as a double-linked list.
 
 ## Program
