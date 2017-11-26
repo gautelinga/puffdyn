@@ -13,7 +13,7 @@ public:
   string get(string key, const char* default_value){ return get(key, string(default_value)); };
   int get(string key, int default_value);
   double get(string key, double default_value);
-  bool get(string key, bool default_value);
+  bool get_bool(string key, bool default_value);
   string get(string key);
   void dump();
   //int get_int(string key, int default_value);

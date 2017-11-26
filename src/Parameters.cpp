@@ -56,10 +56,13 @@ double Parameters::get(string key, double default_value){
   }
 }
 
-bool Parameters::get(string key, bool default_value){
+bool Parameters::get_bool(string key, bool default_value){
   string value = get(key);
   if (value == "True" || value == "true"){
     return true;
+  }
+  else if (value == "False" || value == "false"){
+    return false;
   }
   else {
     return default_value;

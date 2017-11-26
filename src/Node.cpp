@@ -3,26 +3,48 @@
 int COUNT = 0;
 
 Node::Node(double x, Queue* queue){
-  cout << "Creating x=" << x << "!"  << endl;
   this->x = x;
   this->id = COUNT++;
-
   this->queue = queue;
-  this->file.open(this->queue->get_results_dir() + "/" + to_string(this->id)+ ".dat", ofstream::out);
+  if (this->queue->verbose())
+    cout << "Creating node " << this->id << " at x=" << x << "!"  << endl;
+  if (this->queue->do_dump_pos()){
+    this->file.open(this->queue->get_results_dir() + "/xt_" + to_string(this->id)+ ".dat", ofstream::out);
+  }
+  this->queue->increase_size();
 }
 
 Node::~Node(void){
-  cout << "Destroying " << this->id << "!" << endl;
-  this->file.close();
+  if (this->queue->verbose())
+    cout << "Destroying " << this->id << "!" << endl;
+  if (this->queue->do_dump_pos()){
+    this->file.close();
+  }
+  this->queue->decrease_size();
 }
 
 double Node::dist(){
+  double L = this->queue->domain_size();
+  if (this == this->next()){
+    return L;
+  }
   double dx = this->next()->x-this->x;
-  return dx-floor(dx);
+  if (dx > L){
+    dx -= L;
+  }
+  else if (dx < 0.){
+    dx += L;
+  }
+  return dx;
 }
 
-void Node::move(double dx){
-  this->x += dx;
+void Node::to_move(double dx){
+  this->dx = dx;
+}
+
+void Node::move(){
+  this->x += this->dx;
+  this->dx = 0.;
 }
 
 Node* Node::decay(){
@@ -32,20 +54,28 @@ Node* Node::decay(){
   n_next->set_prev(n_prev);
   if (this != n_next){
     delete this;
+    return n_next;
   }
-  return n_next;
+  else {
+    delete this;
+    return NULL;
+  }
 }
 
 Node* Node::split(){
   Node* n_prev = this->prev();
   Node* n = new Node(this->x, this->get_queue());
+  n->to_move(this->dx);
   n_prev->set_next(n);
   n->set_prev(n_prev);
   n->set_next(this);
+  this->set_prev(n);
   return this->next();
 }
 
-void Node::dump(double t){
-  //cout << "Taking a dump." << endl;
-  this->file << t << " " << this->x << endl;
+double Node::dump_pos(double t){
+  if (this->queue->do_dump_pos()){
+    this->file << t << " " << this->x << endl;
+  }
+  return this->x;
 }

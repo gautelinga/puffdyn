@@ -27,11 +27,13 @@ public:
   double dist();
   Node* decay();
   Node* split();
-  void move(double);
-  void dump(double);
+  void to_move(double);
+  void move();
+  double dump_pos(double);
   Queue* get_queue(){ return queue; };
 private:
   double x;
+  double dx = 0.;
   int id;
   Node* next_node;
   Node* prev_node;
