@@ -1,4 +1,7 @@
 # PuffDyn
+<p align="center">
+ <img src="https://raw.githubusercontent.com/gautelinga/puffdyn/master/images/spacetime.png" width="100%" />
+</p>
 Discrete-continuous model of puff dynamics implemented in C++. Visualisation using Python/Matplotlib.
 
 ## Model
