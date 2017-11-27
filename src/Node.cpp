@@ -23,7 +23,7 @@ Node::~Node(void){
   this->queue->decrease_size();
 }
 
-double Node::dist(){
+double Node::dist() const {
   double L = this->queue->domain_size();
   if (this == this->next()){
     return L;

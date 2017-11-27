@@ -22,15 +22,15 @@ public:
   ~Node();
   void set_next(Node* a){ this->next_node = a; };
   void set_prev(Node* a){ this->prev_node = a; };
-  Node* next(){ return this->next_node; };
-  Node* prev(){ return this->prev_node; };
-  double dist();
+  Node* next() const { return this->next_node; };
+  Node* prev() const { return this->prev_node; };
+  double dist() const;
   Node* decay();
   Node* split();
   void to_move(double);
   void move();
   double dump_pos(double);
-  Queue* get_queue(){ return queue; };
+  Queue* get_queue() const { return queue; };
 private:
   double x;
   double dx = 0.;

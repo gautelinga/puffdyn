@@ -16,8 +16,8 @@ Parameters::Parameters(int argc, char* argv[]){
   }
 }
 
-string Parameters::get(string key){
-  map<string, string>::iterator it = params.find(key);
+string Parameters::get(string key) const {
+  map<string, string>::const_iterator it = params.find(key);
   if (it != params.end()){
     return it->second;
   }
@@ -26,7 +26,7 @@ string Parameters::get(string key){
   }
 }
 
-string Parameters::get(string key, string default_value){
+string Parameters::get(string key, string default_value) const {
   string value = get(key);
   if (value != ""){
     return value;
@@ -36,7 +36,7 @@ string Parameters::get(string key, string default_value){
   }
 }
 
-int Parameters::get(string key, int default_value){
+int Parameters::get(string key, int default_value) const {
   string value = get(key);
   if (value != ""){
     return stoi(value);
@@ -46,7 +46,7 @@ int Parameters::get(string key, int default_value){
   }
 }
 
-double Parameters::get(string key, double default_value){
+double Parameters::get(string key, double default_value) const {
   string value = get(key);
   if (value != ""){
     return stod(value);
@@ -56,7 +56,7 @@ double Parameters::get(string key, double default_value){
   }
 }
 
-bool Parameters::get_bool(string key, bool default_value){
+bool Parameters::get_bool(string key, bool default_value) const {
   string value = get(key);
   if (value == "True" || value == "true"){
     return true;
@@ -69,7 +69,7 @@ bool Parameters::get_bool(string key, bool default_value){
   }
 }
 
-void Parameters::dump(){
+void Parameters::dump() const {
   for (map<string, string>::const_iterator it=params.begin(); it != params.end(); ++it){
     cout << it->first << ": " << it->second << endl;
   }
