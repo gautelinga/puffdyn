@@ -65,7 +65,6 @@ Queue::Queue(double* li, double L, int N, double d, double ws, double wd, double
   this->wd = wd;
   this->A = A;
   this->D = D;
-
 }
 
 Queue::~Queue(){
