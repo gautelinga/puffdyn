@@ -68,14 +68,17 @@ def main():
 
     # gaps_filename = args.folder + "/gaps.dat"
     # if os.path.exists(gaps_filename):
+    n_gapsplot = 0
     for gaps_filename in glob.glob(args.folder + "gaps_*.dat"):
-        xgaps = np.loadtxt(gaps_filename)
-        pgaps = np.arange(1, len(xgaps)+1)/float(len(xgaps))
-        # plt.plot(xgaps, pgaps)
-        # plt.show()
-        if args.plotall:
-            plt.semilogy(xgaps, 1.-pgaps)
-    if args.plotall:
+        xgaps = np.array([np.loadtxt(gaps_filename)]).flatten()
+        if len(xgaps) > 1:
+            pgaps = np.arange(1, len(xgaps)+1)/float(len(xgaps))
+            # plt.plot(xgaps, pgaps)
+            # plt.show()
+            if args.plotall:
+                plt.semilogy(xgaps, 1.-pgaps)
+                n_gapsplot += 1
+    if n_gapsplot > 0:
         plt.show()
 
     series = dict()
@@ -106,10 +109,12 @@ def main():
                 
                 plt.plot(x, t, color=cols[0])
                 if t[0] > 1:
-                    plt.plot(x[0], t[0], 'o', markersize=7, markeredgewidth=1,markeredgecolor="r",
+                    plt.plot(x[0], t[0], 'o', markersize=7,
+                             markeredgewidth=1, markeredgecolor="r",
                              markerfacecolor="None")
                 if t[-1] < tmax:
-                    plt.plot(x[-1], t[-1], 'o', markersize=7, markeredgewidth=1,markeredgecolor="k",
+                    plt.plot(x[-1], t[-1], 'o', markersize=7,
+                             markeredgewidth=1, markeredgecolor="k",
                              markerfacecolor="None")
             plt.xlim(0, L)
             plt.ylim(0, tmax)
