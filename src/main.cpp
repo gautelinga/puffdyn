@@ -37,6 +37,17 @@ double* initialize_mf(int &N, double L, double d, double wd, double ws, double A
   return li;
 }
 
+double* initialize_equid(int &N, double L, double d){
+  N = int(L/d);
+  double* li = new double[N];
+  double x = 0.5*d;
+  for (int i=0; i < N; ++i){
+    li[i] = x;
+    x += d;
+  }
+  return li;
+}
+
 string bool2string(bool a){
   return (a ? "True" : "False");
 }
@@ -44,6 +55,7 @@ string bool2string(bool a){
 void print_params(double L, int N, double T, double dt, double d,
                   double wd, double ws, double D, double A,
                   bool do_dump_pos, bool verbose, string init_mode,
+                  bool do_log_gaps,
                   string results_folder){
   cout << "================================================" << endl;
   cout << "PARAMETERS:" << endl;
@@ -62,6 +74,7 @@ void print_params(double L, int N, double T, double dt, double d,
   cout << " results_folder = " << results_folder << endl;
   cout << " verbose        = " << bool2string(verbose) << endl;
   cout << " init_mode      = " << init_mode << endl;
+  cout << " log_gaps       = " << do_log_gaps << endl;
   cout << "================================================" << endl;
 
   ofstream ofile;
@@ -79,6 +92,7 @@ void print_params(double L, int N, double T, double dt, double d,
   ofile << "results_folder=" << results_folder << endl;
   ofile << "verbose=" << bool2string(verbose) << endl;
   ofile << "init_mode=" << init_mode << endl;
+  ofile << "log_gaps=" << bool2string(do_log_gaps) << endl;
   ofile.close();
 }
 
@@ -99,7 +113,8 @@ int main(int argc, char* argv[]){
   bool verbose = params.get_bool("verbose", false);                     // Verbose output
   int stat_intv = params.get("stat_intv", 100);   // Sample statistics interval
   int dump_intv = params.get("dump_intv", 1000);  // Dump statistics after so many samples
-  string init_mode = params.get("init_mode", "mf");  // Init mode: 'random' or 'mf'
+  string init_mode = params.get("init_mode", "mf");  // Init mode: 'random' or 'mf' or 'equid'
+  bool do_log_gaps = params.get_bool("log_gaps", true);  // Log gaps
 
   srand(time(NULL));
   
@@ -110,6 +125,8 @@ int main(int argc, char* argv[]){
   else if (init_mode == "mf"){
     li = initialize_mf(N, L, d, wd, ws, A);
   }
+  else if (init_mode == "equid")
+    li = initialize_equid(N, L, d);
   else {
     cout << "Unknown initializing mode." << endl;
     exit(0);
@@ -120,7 +137,8 @@ int main(int argc, char* argv[]){
 
   Queue q(li, L, N, d, ws, wd, A, D, do_dump_pos, verbose, results_folder);
 
-  print_params(L, N, T, dt, d, wd, ws, A, D, do_dump_pos, verbose, init_mode, results_folder);
+  print_params(L, N, T, dt, d, wd, ws, A, D, do_dump_pos, verbose, init_mode,
+               do_log_gaps, results_folder);
 
   // Do the loop.
   do {
@@ -128,9 +146,11 @@ int main(int argc, char* argv[]){
     if (q.timestep() % stat_intv == 0){
       q.dump_stats();
       cout << "Time = " << q.time() << ", size = " << q.size() << "." << endl;
-      q.log_gaps();
-      if (q.timestep() % (stat_intv*dump_intv) == 0){
-        q.dump_gaps(q.time());
+      if (do_log_gaps){
+        q.log_gaps();
+        if (q.timestep() % (stat_intv*dump_intv) == 0){
+          q.dump_gaps(q.time());
+        }
       }
     }
   } while (q.size() > 0 && q.time() <= T);

@@ -28,14 +28,14 @@ double Node::dist() const {
   if (this == this->next()){
     return L;
   }
-  double dx = this->next()->x-this->x;
-  if (dx > L){
-    dx -= L;
+  double distx = this->next()->x-this->x;
+  if (distx > L){
+    distx -= L;
   }
-  else if (dx < 0.){
-    dx += L;
+  else if (distx < 0.){
+    distx += L;
   }
-  return dx;
+  return distx;
 }
 
 void Node::to_move(double dx){
