@@ -51,7 +51,7 @@ Then it can be run with default parameters by executing
 Alternative parameters can be specified using the command line.
 The above command is equivalent to writing:
 ```
-./puff L=40.0 N=10 d=0.1 wd=0.1 ws=0.16 A=5.0 T=1000.0 dt=0.001 D=0.0 dump_pos=True results_folder=results/One/ verbose=False stat_intv=100 dump_intv=1000 init_mode=mf
+./puff L=40.0 N=10 d=0.1 wd=0.1 ws=0.16 A=5.0 T=1000.0 dt=0.001 D=0.0 dump_pos=True results_folder=results/One/ verbose=False stat_intv=100 dump_intv=1000 init_mode=mf log_gaps=True
 ```
 These arguments are:
 * ``L``: Length of periodic domain.
@@ -68,7 +68,8 @@ These arguments are:
 * ``verbose``: More information on runtime.
 * ``stat_intv``: How many timesteps between each time to probe statistics.
 * ``dump_intv``: How many probings between each dump to file.
-* ``init_mode``: Initialization mode. Equals ``mf`` (mean field, default) or ``random``.
+* ``init_mode``: Initialization mode. Equals ``mf`` (mean field, default), ``random`` (requires ``N`` to be set), or ``equid`` (equidistantly spaced by the interaction distance ``d``).
+* ``log_gaps``: Log gaps between puffs or not.
 
 ## Plotting
 To plot, point to the ``results_folder`` (here as example, ``results/One/``) and run:
