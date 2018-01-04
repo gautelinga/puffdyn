@@ -12,6 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Plot sweep.")
     parser.add_argument("folder", type=str, help="Folder with data.")
     parser.add_argument("-S", type=int, default=None, help="Samples per R.")
+    parser.add_argument("-R_c", type=float, default=None, help="Overrule R_c")
     args = parser.parse_args()
     return args
 
@@ -64,7 +65,8 @@ def main():
             len_glob = max(len_glob, len(data_loc))
 
     print("len_glob =", len_glob)
-    num_avg = int(len_glob/50)
+    num_avg = int(len_glob/10)
+    print ("num_avg =", num_avg)
                     
     #fig, ax = plt.subfigures()
     print("Computing...")
@@ -80,7 +82,6 @@ def main():
         t_list = []
         rho_list = []
         rho_mean = np.zeros(len(dsets))
-        rho_var = np.zeros(len(dsets))
         t_loc = np.zeros(len(dsets))
         for j, data in enumerate(dsets):
             t_list.append(data[:len_min, 0])
@@ -103,8 +104,11 @@ def main():
         rho_avg = rho.mean(0)
         rhot.append((R, t_avg, rho_avg))
 
-    id_c = t_ == t_.max()
-    R_c = np.mean(R_[id_c][1:2])
+    if args.R_c is None:
+        id_c = t_ == t_.max()
+        R_c = np.mean(R_[id_c][1:2])
+    else:
+        R_c = args.R_c
     print("R_c =", R_c)
 
     for R, t_avg, rho_avg in rhot:
@@ -143,11 +147,23 @@ def main():
     plt.ylabel("$\\log_{10} t$")
     plt.show()
     
+    M = 6
+    R__ = np.zeros(len(R_)-M)
+    rho__ = np.zeros(len(rho_)-M)
+    for m in xrange(M):
+        R__ += R_[m:len(R_)-M+m]
+        rho__ += rho_[m:len(rho_)-M+m]
+    R__ /= M
+    rho__ /= M
+
     plt.errorbar(R_, rho_, np.sqrt(rho_var_))
+    #plt.plot(R__, rho__)
     plt.xlabel("$R$")
     plt.ylabel("$\\rho$")
     plt.plot([R_c, R_c], [0., rho_.max()])
     plt.show()
+
+    np.savetxt(os.path.join(args.folder, "rho_vs_R.dat"), np.vstack((R_, rho_, np.sqrt(rho_var_))).T)
 
     plt.plot(R_, rho_**(1./beta))
     plt.plot([R_c, R_c], [0., rho_.max()**(1./beta)])
@@ -158,8 +174,10 @@ def main():
     eps_ = R_-R_c
     rho__ = rho_[eps_ > 0.]
     eps__ = eps_[eps_ > 0.]
-    log_rho__ = np.log10(rho__)
-    log_eps__ = np.log10(eps__)
+    rho___ = rho__[rho__ > 0.]
+    eps___ = eps__[rho__ > 0.]
+    log_rho__ = np.log10(rho___)
+    log_eps__ = np.log10(eps___)
 
     pp = np.polyfit(log_eps__, log_rho__, 1)
     plt.plot(log_eps__, log_rho__)
