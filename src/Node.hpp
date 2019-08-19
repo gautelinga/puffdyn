@@ -13,7 +13,7 @@
 
 class Queue;
 
-#include "Queue.h"
+#include "Queue.hpp"
 using namespace std;
 
 class Node {
@@ -30,6 +30,7 @@ public:
   void to_move(double);
   void move();
   double dump_pos(double);
+  double pos() const { return this->x; };
   Queue* get_queue() const { return queue; };
 private:
   double x;

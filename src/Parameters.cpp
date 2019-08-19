@@ -1,17 +1,39 @@
+#include "Parameters.hpp"
+
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <map>
-#include "Parameters.h"
+#include <boost/algorithm/string.hpp>
 using namespace std;
 
 
 Parameters::Parameters(int argc, char* argv[]){
   size_t found;
+  string argstr;
   for (int iarg=1; iarg < argc; ++iarg){
-    string argstr = string(argv[iarg]);
+    argstr = string(argv[iarg]);
     found = argstr.find('=');
     if (found != string::npos){
       set(argstr.substr(0, found), argstr.substr(found+1));
+    }
+  }
+}
+
+Parameters::Parameters(string infile){
+  ifstream input(infile);
+  if (!input){
+    cout << "File " << infile <<" doesn't exist." << endl;
+    return;
+  }
+  size_t found;
+  string value;
+  for (string line; getline(input, line); ){
+    found = line.find('=');
+    if (found != string::npos){
+      value = line.substr(found+1);
+      boost::trim_right(value);
+      set(line.substr(0, found), value);
     }
   }
 }
@@ -72,5 +94,13 @@ bool Parameters::get_bool(string key, bool default_value) const {
 void Parameters::dump() const {
   for (map<string, string>::const_iterator it=params.begin(); it != params.end(); ++it){
     cout << it->first << ": " << it->second << endl;
+  }
+}
+
+void Parameters::dump(string outfile) const {
+  ofstream output(outfile);
+  for (map<string, string>::const_iterator it=params.begin();
+       it != params.end(); ++it){
+    output << it->first << "=" << it->second << endl;
   }
 }

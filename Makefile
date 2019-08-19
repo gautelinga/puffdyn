@@ -1,11 +1,11 @@
 CXX      := -g++
-CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror -O3 -std=c++11
+CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror -O3 -std=c++11 -ffast-math
 LDFLAGS  := -L/usr/lib -lstdc++ -lm
 BUILD    := build
 OBJ_DIR  := $(BUILD)
 TARGET   := puff
 INCLUDE  := -Iinclude/
-SRC      := $(wildcard src/*.cpp)
+SRC      := $(filter-out src/pybind11.cpp, $(wildcard src/*.cpp))
 
 OBJECTS := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 

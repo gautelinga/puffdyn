@@ -1,6 +1,9 @@
-#include "Queue.h"
+#include "Queue.hpp"
+
 #include <stdio.h>
 #include <sys/stat.h>
+
+#include "io.hpp"
 //#include <boost/filesystem/path.hpp>
 //#include <boost/filesystem/operations.hpp>
 //namespace fs = boost::filesystem;
@@ -12,10 +15,51 @@ normal_distribution<double> gaussrd(0.0, 1.0);
 class Node;
 class Queue;
 
-Queue::Queue(double* li, double L, int N, double d, double ws, double wd, double A,
-             double D, bool do_dump_pos, bool verbose, string results_dir){
-  cout << "Creating queue!" << endl;
+Queue::Queue(const double* li, const int N,
+	     const double L, const double lc, const double v0,
+	     const double alpha_s, const double beta_s,
+	     const double alpha_d, const double beta_d,
+             const double D,
+	     const bool do_dump_pos, const bool verbose, const string results_dir){
+  this->init(li, N, L, d, v0, alpha_s, beta_s, alpha_d, beta_d, A, D, do_dump_pos, verbose, results_dir);
+}
 
+Queue::Queue(const string infile,
+	     const double L, const double lc, const double v0,
+	     const double alpha_s, const double beta_s,
+	     const double alpha_d, const double beta_d,
+             const double D,
+	     const bool do_dump_pos, const bool verbose, const string results_dir){
+  int N = 0;
+  double* li = list_from_file(N, infile);
+  this->init(li, N, L, d, v0, alpha_s, beta_s, alpha_d, beta_d, A, D, do_dump_pos, verbose, results_dir);
+}
+
+Queue::~Queue(){
+  if (this->verbose())
+    cout << "Destroying queue!" << endl;
+  Node* n = this->first;
+  Node* n_prev;
+  if (n != NULL){
+    do {
+      n_prev = n;
+      n = n_prev->next();
+      delete n_prev;
+    } while (n != this->first);
+  }
+  this->file.close();
+}
+
+void Queue::init(const double* li, const int N,
+		 const double L, const double lc, const double v0,
+		 const double alpha_s, const double beta_s,
+		 const double alpha_d, const double beta_d,
+		 const double D,
+		 const bool do_dump_pos, const bool verbose, const string results_dir){
+  if (verbose) {
+    cout << "Creating queue!" << endl;
+  }
+  
   this->L = L;
   this->dump_pos_flag = do_dump_pos;
   this->verbose_flag = verbose;
@@ -46,6 +90,18 @@ Queue::Queue(double* li, double L, int N, double d, double ws, double wd, double
 
   this->file.open(this->get_results_dir() + "/tdata.dat", ofstream::out);
 
+  this->load_list(li, N);
+
+  this->v0 = v0;
+  this->lc = lc;
+  this->alpha_s = alpha_s;
+  this->beta_s = beta_s;
+  this->alpha_d = alpha_d;
+  this->beta_d = beta_d;
+  this->D = D;
+}
+
+void Queue::load_list(const double *li, const int N){
   Node *n = new Node(li[0], this);
   Node *n_prev, *n_first;
 
@@ -59,27 +115,19 @@ Queue::Queue(double* li, double L, int N, double d, double ws, double wd, double
   n->set_next(n_first);
   n_first->set_prev(n);
   this->first = n_first;
-
-  this->d = d;
-  this->ws = ws;
-  this->wd = wd;
-  this->A = A;
-  this->D = D;
 }
 
-Queue::~Queue(){
-  if (this->verbose())
-    cout << "Destroying queue!" << endl;
-  Node* n = this->first;
-  Node* n_prev;
-  if (n != NULL){
-    do {
-      n_prev = n;
-      n = n_prev->next();
-      delete n_prev;
-    } while (n != this->first);
-  }
-  this->file.close();
+double* Queue::export_list(int &N) const {
+  Node *n = this->first;
+  N = this->size();
+  double* li = new double[N];
+  int i = 0;
+  do {
+    li[i] = n->pos();
+    ++i;
+    n = n->next();
+  } while (n != this->first);
+  return li;
 }
 
 void Queue::dump_stats(){
@@ -92,26 +140,27 @@ void Queue::dump_stats(){
   this->file << this->t << " " << x_sum/this->size() << " " << this->size() << endl;
 }
 
-void Queue::step(double dt){
+void Queue::step(const double dt){
   this->t += dt;
   ++this->it;
   Node *n = this->first;
-  double distx, dx, u;
+  double expmllc, l, dx, u;
   double Pd, Ps;
   double R;
   bool is_first;
   do {
-    distx = n->dist();
-    u = this->v(distx);
+    l = n->dist();
+    expmllc = exp(-l/this->lc);
+    u = this->v(expmllc);
     dx = u*dt;
     if (this->D > 0.0){
       dx += sqrt(D*dt)*gaussrd(e2);
     }
-    dx = max(0., min(dx, distx));
+    dx = max(0., min(dx, l));
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
-    Pd = this->decay_rate(u)*dt;
-    Ps = this->splitting_rate(u)*dt;
+    Pd = this->decay_rate(expmllc)*dt;
+    Ps = this->splitting_rate(expmllc)*dt;
     R = double(rand())/RAND_MAX;
     is_first = bool(n == this->first);
     if (R < Pd){
@@ -141,17 +190,17 @@ void Queue::step(double dt){
   }
 }
 
-double Queue::v(double dist) const {
+double Queue::v(const double expmllc) const {
   // Velocity
-  return 1.-exp(-dist/this->d);
+  return -this->v0*expmllc;
 }
 
-double Queue::decay_rate(double v) const {
-  return this->wd*(this->A + (1.-this->A)*v);
+double Queue::decay_rate(const double expmllc) const {
+  return exp(-exp(this->alpha_d + this->beta_d*expmllc));
 }
 
-double Queue::splitting_rate(double v) const {
-  return this->ws*(1./this->A + (1.-1./this->A)*v);
+double Queue::splitting_rate(const double expmllc) const {
+  return exp(-exp(this->alpha_s + this->beta_s*expmllc));
 }
 
 void Queue::set_first(Node* n){
@@ -166,7 +215,7 @@ void Queue::log_gaps(){
   } while (n != this->first);
 }
 
-void Queue::dump_gaps(string filename){
+void Queue::dump_gaps(const string filename){
   ofstream gaps_file(filename, ofstream::out);
   for (set<double>::iterator it = this->gaps.begin(); it != gaps.end(); ++it){
     gaps_file << *it << endl;
@@ -175,7 +224,7 @@ void Queue::dump_gaps(string filename){
   gaps_file.close();
 }
 
-void Queue::dump_gaps(double t){
+void Queue::dump_gaps(const double t){
   string filename = this->get_results_dir() + "/gaps_t" + to_string(t) + ".dat";
   this->dump_gaps(filename);
 }
@@ -183,4 +232,16 @@ void Queue::dump_gaps(double t){
 void Queue::dump_gaps(){
   string filename = this->get_results_dir() + "/gaps.dat";
   this->dump_gaps(filename);
+}
+
+void Queue::read_state(const string infile){
+  int N = 0;
+  double* li = list_from_file(N, infile);
+  this->load_list(li, N);
+}
+
+void Queue::dump_state(const string outfile) const {
+  int N = 0;
+  double* li = this->export_list(N);
+  list_to_file(N, li, outfile);
 }
