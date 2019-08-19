@@ -6,8 +6,8 @@
 using namespace std;
 
 
-double* initialize_random(int N, double L);
-double* initialize_mf(int &N, double L, double d, double wd, double ws, double A);
-double* initialize_equid(int &N, double L, double d);
+double* initialize_random(int, double);
+double* initialize_mf(int &, double, double, double, double, double, double);
+double* initialize_equid(int &, double, double);
 
 #endif // __INITIALIZE_H

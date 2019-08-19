@@ -8,23 +8,30 @@ string bool2string(bool a){
   return (a ? "True" : "False");
 }
 
-void print_params(double L, int N, double T, double dt, double d,
-                  double wd, double ws, double D, double A,
-                  bool do_dump_pos, bool verbose, string init_mode,
+void print_params(double L, int N,
+		  double T, double dt,
+		  double lc, double v0,
+                  double alpha_d, double beta_d, 
+		  double alpha_s, double beta_s,
+		  double D,
+                  bool do_dump_pos, bool verbose,
+		  string init_mode,
                   bool do_log_gaps,
                   string results_folder){
   cout << "================================================" << endl;
   cout << "PARAMETERS:" << endl;
   cout << "------------------------------------------------" << endl;
-  cout << " L   = " << L << endl;
-  cout << " N   = " << N << endl;
-  cout << " T   = " << T << endl;
-  cout << " dt  = " << dt << endl;
-  cout << " d   = " << d << endl;
-  cout << " wd  = " << wd << endl;
-  cout << " ws  = " << ws << endl;
-  cout << " A   = " << A << endl;
-  cout << " D   = " << D << endl;
+  cout << " L       = " << L << endl;
+  cout << " N       = " << N << endl;
+  cout << " T       = " << T << endl;
+  cout << " dt      = " << dt << endl;
+  cout << " lc      = " << lc << endl;
+  cout << " v0      = " << v0 << endl;
+  cout << " alpha_d = " << alpha_d << endl;
+  cout << " beta_d  = " << beta_d << endl;
+  cout << " alpha_s = " << alpha_s << endl;
+  cout << " beta_s  = " << beta_s << endl;
+  cout << " D       = " << D << endl;
   cout << "------------------------------------------------" << endl;
   cout << " dump_pos       = " << bool2string(do_dump_pos) << endl;
   cout << " results_folder = " << results_folder << endl;
@@ -39,10 +46,12 @@ void print_params(double L, int N, double T, double dt, double d,
   ofile << "N=" << N << endl;
   ofile << "T=" << T << endl;
   ofile << "dt=" << dt << endl;
-  ofile << "d=" << d << endl;
-  ofile << "wd=" << wd << endl;
-  ofile << "ws=" << ws << endl;
-  ofile << "A=" << A << endl;
+  ofile << "lc=" << lc << endl;
+  ofile << "v0=" << v0 << endl;
+  ofile << "alpha_d=" << alpha_d << endl;
+  ofile << "beta_d=" << beta_d << endl;
+  ofile << "alpha_s=" << alpha_s << endl;
+  ofile << "beta_s=" << beta_s << endl;
   ofile << "D=" << D << endl;
   ofile << "dump_pos=" << bool2string(do_dump_pos) << endl;
   ofile << "results_folder=" << results_folder << endl;

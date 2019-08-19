@@ -21,7 +21,7 @@ Queue::Queue(const double* li, const int N,
 	     const double alpha_d, const double beta_d,
              const double D,
 	     const bool do_dump_pos, const bool verbose, const string results_dir){
-  this->init(li, N, L, d, v0, alpha_s, beta_s, alpha_d, beta_d, A, D, do_dump_pos, verbose, results_dir);
+  this->init(li, N, L, lc, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, verbose, results_dir);
 }
 
 Queue::Queue(const string infile,
@@ -32,7 +32,7 @@ Queue::Queue(const string infile,
 	     const bool do_dump_pos, const bool verbose, const string results_dir){
   int N = 0;
   double* li = list_from_file(N, infile);
-  this->init(li, N, L, d, v0, alpha_s, beta_s, alpha_d, beta_d, A, D, do_dump_pos, verbose, results_dir);
+  this->init(li, N, L, lc, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, verbose, results_dir);
 }
 
 Queue::~Queue(){

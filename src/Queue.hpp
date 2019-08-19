@@ -21,10 +21,16 @@ using namespace std;
 
 class Queue {
 public:
-  Queue(const double*, const int, const double, const double, const double, const double, const double,
-	const double, const double, const double, const bool, const bool, const string);
-  Queue(const string, const double, const double, const double, const double, const double, const double,
-	const double, const double, const bool, const bool, const string);
+  Queue(const double*, const int,
+	const double, const double, const double,
+	const double, const double, const double,
+	const double, const double,
+	const bool, const bool, const string);
+  Queue(const string,
+	const double, const double, const double,
+	const double, const double, const double,
+	const double, const double,
+	const bool, const bool, const string);
   ~Queue();
   void init(const double*, const int, const double, const double, const double, const double, const double,
 	    const double, const double, const double, const bool, const bool, const string);

@@ -12,8 +12,10 @@ double* initialize_random(int N, double L){
   return li;
 }
 
-double* initialize_mf(int &N, double L, double d, double wd, double ws, double A){
-  double ell = d*log(1.0 + (A*wd-ws/A)/(ws-wd));
+double* initialize_mf(int &N, double L, double lc,
+		      double alpha_d, double beta_d,
+		      double alpha_s, double beta_s){
+  double ell = -lc*log(-(alpha_d-alpha_s)/(beta_d-beta_s));
   N = int(L/ell);
   double* li = new double[N];
   ell = L/N;
@@ -25,13 +27,13 @@ double* initialize_mf(int &N, double L, double d, double wd, double ws, double A
   return li;
 }
 
-double* initialize_equid(int &N, double L, double d){
-  N = int(L/d);
+double* initialize_equid(int &N, double L, double lc){
+  N = int(L/lc);
   double* li = new double[N];
-  double x = 0.5*d;
+  double x = 0.5*lc;
   for (int i=0; i < N; ++i){
     li[i] = x;
-    x += d;
+    x += lc;
   }
   return li;
 }
