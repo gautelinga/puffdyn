@@ -37,3 +37,12 @@ double* initialize_equid(int &N, double L, double lc){
   }
   return li;
 }
+
+double* initialize_pair(int &N, double L){
+  double* li = new double[N];
+  for (int i=0; i < N; ++i){
+    li[i] = 0.5*L + i*1e-9*L;
+  }
+  return li;
+}
+

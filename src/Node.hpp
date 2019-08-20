@@ -24,14 +24,17 @@ public:
   void set_prev(Node* a){ this->prev_node = a; };
   Node* next() const { return this->next_node; };
   Node* prev() const { return this->prev_node; };
-  double dist() const;
+  double dist_upstream() const;
+  double dist_downstream() const;
   Node* decay();
   Node* split();
+  Node* split(double);
   void to_move(double);
   void move();
-  double dump_pos(double);
+  double dump_pos();
   double pos() const { return this->x; };
   Queue* get_queue() const { return queue; };
+  int get_id() const { return this->id; };
 private:
   double x;
   double dx = 0.;

@@ -22,18 +22,20 @@ using namespace std;
 class Queue {
 public:
   Queue(const double*, const int,
-	const double, const double, const double,
+	const double, const double, const double, const double,
 	const double, const double, const double,
 	const double, const double,
-	const bool, const bool, const string);
+	const bool, const bool, const bool, const string);
   Queue(const string,
-	const double, const double, const double,
+	const double, const double, const double, const double,
 	const double, const double, const double,
 	const double, const double,
-	const bool, const bool, const string);
+	const bool, const bool, const bool, const string);
   ~Queue();
-  void init(const double*, const int, const double, const double, const double, const double, const double,
-	    const double, const double, const double, const bool, const bool, const string);
+  void init(const double*, const int,
+	    const double, const double, const double, const double,
+	    const double, const double, const double, const double,
+	    const double, const bool, const bool, const bool, const string);
   int size() const { return queue_length; };
   void set_size(int s){ this->queue_length = s; };
   void load_list(const double*, const int);
@@ -70,12 +72,16 @@ private:
   double alpha_s;
   double beta_s;
   double lc;
+  double lin;
   double v0;
   double D;
   string results_dir;
   int count = 0;
   ofstream file;
+  ofstream deaths_file;
+  ofstream births_file;
   bool dump_pos_flag;
+  bool log_events_flag;
   bool verbose_flag;
   set<double> gaps;
 };

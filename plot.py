@@ -64,7 +64,7 @@ def main():
         u_mean = (x_mean_all[-1]-x_mean_all[0])/(t_all[-1]-t_all[0])
     else:
         u_mean = args.umean
-    print "u_mean = ", u_mean
+    print("u_mean = ", u_mean)
 
     # gaps_filename = args.folder + "/gaps.dat"
     # if os.path.exists(gaps_filename):
@@ -85,13 +85,14 @@ def main():
     for filename in glob.glob(args.folder + XT_PREFIX + "*" + XT_SUFFIX):
         key = int(str(filename).split(XT_PREFIX)[-1].split(XT_SUFFIX)[0])
         data = np.loadtxt(filename)
-        print filename, key
+        print(filename, key)
         if data.ndim > 1:
             t = data[:, 0]
             x = (data[:, 1]-u_mean*t) % L
+            #x = (data[:, 1]) % L
 
             abs_dx = np.abs(np.diff(x))
-            mask = np.hstack([ abs_dx > 0.5*L, [False]])
+            mask = np.hstack([abs_dx > 0.5*L, [False]])
             masked_data = np.ma.MaskedArray(x, mask)
             series[key] = (t, masked_data)
 
@@ -107,7 +108,7 @@ def main():
             for key, (t, x) in series.items():
                 #cval = scalar_map.to_rgba(key)
                 
-                plt.plot(x, t, color=cols[0])
+                plt.plot(x, t, color=cols[0], linewidth=.5)
                 if t[0] > 1:
                     plt.plot(x[0], t[0], 'o', markersize=7,
                              markeredgewidth=1, markeredgecolor="r",
@@ -126,12 +127,13 @@ def main():
         if len(series):
             keys = np.array(series.keys())
             cmap = plt.get_cmap("viridis")
-            cnorm = colors.Normalize(vmin=keys.min(), vmax=keys.max())
-            scalar_map = cmx.ScalarMappable(norm=cnorm, cmap=cmap)
+            #cnorm = colors.Normalize(vmin=keys.min(), vmax=keys.max())
+            #scalar_map = cmx.ScalarMappable(norm=cnorm, cmap=cmap)
 
             for key, (t, x) in series.items():
-                cval = scalar_map.to_rgba(key)
-                plt.plot(t, x, color=cval)
+                #cval = scalar_map.to_rgba(key)
+                #plt.plot(t, x, color=cval)
+                plt.plot(t, x)
             plt.show()
 
 if __name__ == "__main__":

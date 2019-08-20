@@ -10,13 +10,14 @@ string bool2string(bool a){
 
 void print_params(double L, int N,
 		  double T, double dt,
-		  double lc, double v0,
+		  double lc, double lin, double v0,
                   double alpha_d, double beta_d, 
 		  double alpha_s, double beta_s,
 		  double D,
                   bool do_dump_pos, bool verbose,
 		  string init_mode,
                   bool do_log_gaps,
+		  bool do_log_events,
                   string results_folder){
   cout << "================================================" << endl;
   cout << "PARAMETERS:" << endl;
@@ -26,6 +27,7 @@ void print_params(double L, int N,
   cout << " T       = " << T << endl;
   cout << " dt      = " << dt << endl;
   cout << " lc      = " << lc << endl;
+  cout << " lin     = " << lin << endl;
   cout << " v0      = " << v0 << endl;
   cout << " alpha_d = " << alpha_d << endl;
   cout << " beta_d  = " << beta_d << endl;
@@ -37,7 +39,8 @@ void print_params(double L, int N,
   cout << " results_folder = " << results_folder << endl;
   cout << " verbose        = " << bool2string(verbose) << endl;
   cout << " init_mode      = " << init_mode << endl;
-  cout << " log_gaps       = " << do_log_gaps << endl;
+  cout << " log_gaps       = " << bool2string(do_log_gaps) << endl;
+  cout << " log_events     = " << bool2string(do_log_events) << endl;
   cout << "================================================" << endl;
 
   ofstream ofile;
@@ -47,6 +50,7 @@ void print_params(double L, int N,
   ofile << "T=" << T << endl;
   ofile << "dt=" << dt << endl;
   ofile << "lc=" << lc << endl;
+  ofile << "lin=" << lin << endl;
   ofile << "v0=" << v0 << endl;
   ofile << "alpha_d=" << alpha_d << endl;
   ofile << "beta_d=" << beta_d << endl;
@@ -58,6 +62,7 @@ void print_params(double L, int N,
   ofile << "verbose=" << bool2string(verbose) << endl;
   ofile << "init_mode=" << init_mode << endl;
   ofile << "log_gaps=" << bool2string(do_log_gaps) << endl;
+  ofile << "log_events=" << bool2string(do_log_events) << endl;
   ofile.close();
 }
 

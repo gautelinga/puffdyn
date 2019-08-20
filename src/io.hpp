@@ -17,13 +17,14 @@ using namespace std;
 
 string bool2string(bool);
 void print_params(double, int,
-		  double, double,
+		  double, double, double,
 		  double, double,
                   double, double,
 		  double, double,
 		  double,
                   bool, bool,
 		  string,
+		  bool,
 		  bool,
 		  string);
 double* list_from_file(int &N, const string infile);

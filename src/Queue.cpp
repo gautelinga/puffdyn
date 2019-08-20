@@ -16,23 +16,25 @@ class Node;
 class Queue;
 
 Queue::Queue(const double* li, const int N,
-	     const double L, const double lc, const double v0,
+	     const double L, const double lc, const double lin, const double v0,
 	     const double alpha_s, const double beta_s,
 	     const double alpha_d, const double beta_d,
              const double D,
-	     const bool do_dump_pos, const bool verbose, const string results_dir){
-  this->init(li, N, L, lc, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, verbose, results_dir);
+	     const bool do_dump_pos, const bool do_log_events,
+	     const bool verbose, const string results_dir){
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
 }
 
 Queue::Queue(const string infile,
-	     const double L, const double lc, const double v0,
+	     const double L, const double lc, const double lin, const double v0,
 	     const double alpha_s, const double beta_s,
 	     const double alpha_d, const double beta_d,
              const double D,
-	     const bool do_dump_pos, const bool verbose, const string results_dir){
+	     const bool do_dump_pos, const bool do_log_events,
+	     const bool verbose, const string results_dir){
   int N = 0;
   double* li = list_from_file(N, infile);
-  this->init(li, N, L, lc, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, verbose, results_dir);
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
 }
 
 Queue::~Queue(){
@@ -48,52 +50,62 @@ Queue::~Queue(){
     } while (n != this->first);
   }
   this->file.close();
+  if (this->log_events_flag){
+    this->deaths_file.close();
+    this->births_file.close();
+  }
 }
 
 void Queue::init(const double* li, const int N,
-		 const double L, const double lc, const double v0,
+		 const double L, const double lc, const double lin, const double v0,
 		 const double alpha_s, const double beta_s,
 		 const double alpha_d, const double beta_d,
 		 const double D,
-		 const bool do_dump_pos, const bool verbose, const string results_dir){
+		 const bool do_dump_pos, const bool do_log_events,
+		 const bool verbose, const string results_dir){
   if (verbose) {
     cout << "Creating queue!" << endl;
   }
   
   this->L = L;
   this->dump_pos_flag = do_dump_pos;
+  this->log_events_flag = do_log_events;
   this->verbose_flag = verbose;
   this->results_dir = results_dir;
 
   struct stat sb;
   if (stat(results_dir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
-    string rm_code_str = "rm " + results_dir + "/*";
+    // EXTREMELY DANGEROUS!!!
+    string rm_code_str = "rm -rf " + results_dir;
     const char* rm_code = rm_code_str.c_str();
     const int rm_err = system(rm_code);
     if (rm_err == -1){
       cout << "Couldn't empty folder!" << endl;
       exit(0);
-    } 
+    }
   }
-  else {
-    if (this->verbose()){
-      cout << "Creating directory: " << results_dir << endl;
-    }
-    string dir_code_str = "mkdir -p " + results_dir;
-    const char* dir_code = dir_code_str.c_str();
-    const int dir_err = system(dir_code);
-    if (dir_err == -1){
-      cout << "Couldn't create folder!" << endl;
-      exit(0);
-    }
+  if (this->verbose()){
+    cout << "Creating directory: " << results_dir << endl;
+  }
+  string dir_code_str = "mkdir -p " + results_dir;
+  const char* dir_code = dir_code_str.c_str();
+  const int dir_err = system(dir_code);
+  if (dir_err == -1){
+    cout << "Couldn't create folder!" << endl;
+    exit(0);
   }
 
   this->file.open(this->get_results_dir() + "/tdata.dat", ofstream::out);
-
+  if (this->log_events_flag){
+    this->deaths_file.open(this->get_results_dir() + "/deaths.dat", ofstream::out);
+    this->births_file.open(this->get_results_dir() + "/births.dat", ofstream::out);
+  }
+  
   this->load_list(li, N);
 
   this->v0 = v0;
   this->lc = lc;
+  this->lin = lin;
   this->alpha_s = alpha_s;
   this->beta_s = beta_s;
   this->alpha_d = alpha_d;
@@ -133,30 +145,33 @@ double* Queue::export_list(int &N) const {
 void Queue::dump_stats(){
   Node *n = this->first;
   double x_sum = 0.;
+  double N = this->size();
   do {
-    x_sum += n->dump_pos(this->t);
+    x_sum += n->dump_pos();
     n = n->next();
   } while(n != this->first);
-  this->file << this->t << " " << x_sum/this->size() << " " << this->size() << endl;
+  this->file << this->time() << " " << x_sum/N << " " << N << endl;
 }
 
 void Queue::step(const double dt){
   this->t += dt;
   ++this->it;
   Node *n = this->first;
-  double expmllc, l, dx, u;
+  double expmllc, l, dx_max, dx, u;
   double Pd, Ps;
   double R;
   bool is_first;
   do {
-    l = n->dist();
+    l = n->dist_upstream();
+    dx_max = n->dist_downstream(); // Usually not necessary to do this twice
     expmllc = exp(-l/this->lc);
     u = this->v(expmllc);
     dx = u*dt;
     if (this->D > 0.0){
       dx += sqrt(D*dt)*gaussrd(e2);
     }
-    dx = max(0., min(dx, l));
+    //dx = max(0., min(dx, l));
+    dx = min(dx, dx_max);
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
     Pd = this->decay_rate(expmllc)*dt;
@@ -164,6 +179,9 @@ void Queue::step(const double dt){
     R = double(rand())/RAND_MAX;
     is_first = bool(n == this->first);
     if (R < Pd){
+      if (log_events_flag){
+	this->deaths_file << this->t << " " << n->get_id() << endl;
+      }
       n = n->decay();
       if (is_first && n != NULL){
         this->set_first(n->prev());
@@ -173,7 +191,10 @@ void Queue::step(const double dt){
       }
     }
     else if (R < Pd+Ps){
-      n = n->split();
+      n = n->split(this->lin);
+      if (log_events_flag){
+	this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
+      }
       if (is_first){
         this->set_first(n->prev());
       }
@@ -192,7 +213,7 @@ void Queue::step(const double dt){
 
 double Queue::v(const double expmllc) const {
   // Velocity
-  return -this->v0*expmllc;
+  return this->v0*expmllc;
 }
 
 double Queue::decay_rate(const double expmllc) const {
@@ -210,7 +231,7 @@ void Queue::set_first(Node* n){
 void Queue::log_gaps(){
   Node* n = this->first;
   do {
-    this->gaps.insert(n->dist());
+    this->gaps.insert(n->dist_upstream());
     n = n->next();
   } while (n != this->first);
 }

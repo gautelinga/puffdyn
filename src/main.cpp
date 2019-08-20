@@ -21,6 +21,7 @@ using namespace std;
 
 bool simulate(Queue &q, double dt, double T, int stat_intv, int dump_intv,
 	      bool do_log_gaps, bool verbose){
+  q.dump_stats();
   do {
     q.step(dt);
     if (q.timestep() % stat_intv == 0){
@@ -43,6 +44,7 @@ int main(int argc, char* argv[]){
   double L       = params.get("L",    5000.0);       // Domain length
   int    N       = params.get("N",      40);        // Number of initial puffs
   double lc      = params.get("lc",     12.0);       // Interaction distance
+  double lin     = params.get("lin",    20.0);
   double v0      = params.get("v0",      0.2406);
   double alpha_d = params.get("alpha_d", 3.0799);     // Decay time
   double beta_d  = params.get("beta_d",  -9.2421);      // Decay time amplification
@@ -58,18 +60,19 @@ int main(int argc, char* argv[]){
   int dump_intv  = params.get("dump_intv", 1000);  // Dump statistics after so many samples
   string init_mode = params.get("init_mode", "mf");  // Init mode: 'random', 'mf' or 'equid'
   bool do_log_gaps = params.get_bool("log_gaps", false);  // Log gaps
+  bool do_log_events = params.get_bool("log_events", false);  // Log events
 
   srand(time(NULL));
   
   double* li;
-  if (init_mode == "random"){
+  if (init_mode == "random")
     li = initialize_random(N, L);
-  }
-  else if (init_mode == "mf"){
+  else if (init_mode == "mf")
     li = initialize_mf(N, L, lc, alpha_d, beta_d, alpha_s, beta_s);
-  }
   else if (init_mode == "equid")
     li = initialize_equid(N, L, lc);
+  else if (init_mode == "pair")
+    li = initialize_pair(N, L);
   else {
     cout << "Unknown initializing mode." << endl;
     exit(0);
@@ -78,15 +81,15 @@ int main(int argc, char* argv[]){
   // params.dump();
   // Initialize the queue
 
-  Queue q(li, N, L, lc, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, verbose, results_folder);
+  Queue q(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_folder);
 
   print_params(L, N,
 	       T, dt,
-	       lc, v0,
+	       lc, lin, v0,
 	       alpha_d, beta_d, alpha_s, beta_s,
 	       D,
 	       do_dump_pos, verbose, init_mode,
-               do_log_gaps, results_folder);
+               do_log_gaps, do_log_events, results_folder);
 
   // Do the loop.
   simulate(q, dt, T, stat_intv, dump_intv, do_log_gaps, true);

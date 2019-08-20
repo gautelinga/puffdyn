@@ -10,6 +10,7 @@ Node::Node(double x, Queue* queue){
     cout << "Creating node " << this->id << " at x=" << x << "!"  << endl;
   if (this->queue->do_dump_pos()){
     this->file.open(this->queue->get_results_dir() + "/xt_" + to_string(this->id)+ ".dat", ofstream::out);
+    this->file << this->queue->time() << " " << this->x << endl;
   }
   this->queue->increase_size();
 }
@@ -23,19 +24,30 @@ Node::~Node(void){
   this->queue->decrease_size();
 }
 
-double Node::dist() const {
+double Node::dist_upstream() const {
   double L = this->queue->domain_size();
-  if (this == this->next()){
+  if (this == this->prev()){
     return L;
   }
-  double distx = this->next()->x-this->x;
-  if (distx > L){
-    distx -= L;
+  double x_prev = fmod(this->prev()->x, L);
+  double x = fmod(this->x, L);
+  if (x_prev > x){
+    x_prev -= L;
   }
-  else if (distx < 0.){
-    distx += L;
+  return x - x_prev;;
+}
+
+double Node::dist_downstream() const {
+  double L = this->queue->domain_size();
+  if (this == this->prev()){
+    return L;
   }
-  return distx;
+  double x_next = fmod(this->next()->x, L);
+  double x = fmod(this->x, L);
+  if (x > x_next){
+    x_next += L;
+  }
+  return x_next - x;
 }
 
 void Node::to_move(double dx){
@@ -52,6 +64,9 @@ Node* Node::decay(){
   Node* n_next = this->next();
   n_prev->set_next(n_next);
   n_next->set_prev(n_prev);
+  if (this->queue->do_dump_pos()){
+    this->file << this->queue->time() << " " << this->x << endl;
+  }
   if (this != n_next){
     delete this;
     return n_next;
@@ -63,19 +78,26 @@ Node* Node::decay(){
 }
 
 Node* Node::split(){
-  Node* n_prev = this->prev();
-  Node* n = new Node(this->x, this->get_queue());
-  n->to_move(this->dx);
-  n_prev->set_next(n);
-  n->set_prev(n_prev);
-  n->set_next(this);
-  this->set_prev(n);
-  return this->next();
+  return this->split(0.0);
 }
 
-double Node::dump_pos(double t){
+Node* Node::split(double dx){
+  Node* n_next = this->next();
+  Node* n = new Node(this->x+dx, this->get_queue());
+  n->to_move(this->dx);
+  n_next->set_prev(n);
+  n->set_next(n_next);
+  n->set_prev(this);
+  this->set_next(n);
   if (this->queue->do_dump_pos()){
-    this->file << t << " " << this->x << endl;
+    this->file << this->queue->time() << " " << this->x << endl;
+  }
+  return n;
+}
+
+double Node::dump_pos(){
+  if (this->queue->do_dump_pos()){
+    this->file << this->queue->time() << " " << this->x << endl;
   }
   return this->x;
 }
