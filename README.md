@@ -53,6 +53,10 @@ The above command is equivalent to writing:
 ```
 ./puff L=40.0 N=10 d=0.1 wd=0.1 ws=0.16 A=5.0 T=1000.0 dt=0.001 D=0.0 dump_pos=True results_folder=results/One/ verbose=False stat_intv=100 dump_intv=1000 init_mode=mf log_gaps=True
 ```
+NOTE: This works now:
+```
+./puff init_mode=mf alpha_d=3.07 beta_d=-9.2 alpha_s=2.7 beta_s=1.22 N=1 L=1000 T=1e8 D=1e-2 log_gaps=false dump_intv=1000 stat_intv=10 dt=1e1 dump_pos=false log_events=true
+```
 These arguments are:
 * ``L``: Length of periodic domain.
 * ``N``: Number of initial puffs (not in use if ``ìnit_mode==mf``).
