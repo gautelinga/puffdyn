@@ -42,7 +42,8 @@ def simulate(state_in,
              beta_d=-9.24,
              alpha_s=2.70,
              beta_s=1.22,
-             D=1e1,
+             D=1e-1,
+             full_output=False,
              dump_pos=False,
              verbose=False,
              log_gaps=False,
@@ -86,5 +87,6 @@ def simulate(state_in,
         params_out = unpack_parameters(contents)
 
     t = params_out["t"]
-
+    if full_output:
+        return state_out, t, np.loadtxt(os.path.join(tmpfolder, "tdata.dat"))
     return state_out, t

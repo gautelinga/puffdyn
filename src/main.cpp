@@ -41,7 +41,7 @@ bool simulate(Queue &q, double dt, double T, int stat_intv, int dump_intv,
 
 int main(int argc, char* argv[]){
   Parameters params(argc, argv);
-  double L       = params.get("L",    5000.0);       // Domain length
+  double L       = params.get("L",    1000.0);       // Domain length
   int    N       = params.get("N",      40);        // Number of initial puffs
   double lc      = params.get("lc",     12.0);       // Interaction distance
   double lin     = params.get("lin",    20.0);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
   double alpha_s = params.get("alpha_s", 2.7048);    // Splitting time
   double beta_s  = params.get("beta_s",  1.2207);      // Splitting time amplification
   double T       = params.get("T",     1e12);      // Total simulation time
-  double dt      = params.get("dt",    1e2);      // Timestep
+  double dt      = params.get("dt",    1e1);      // Timestep
   double D       = params.get("D",       0.0);       // Diffusion
   bool do_dump_pos = params.get_bool("dump_pos", true);                 // Dump positions
   string results_folder = params.get("results_folder", "results/0");  // Name

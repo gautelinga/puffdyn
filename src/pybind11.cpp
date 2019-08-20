@@ -24,7 +24,7 @@ void simulate_f2f(string state_infile,
   double beta_d  = params.get("beta_d", -9.24);   //
   double alpha_s = params.get("alpha_s", 2.70);  // Splitting rate
   double beta_s  = params.get("beta_s",  1.22);  //
-  double D       = params.get("D",       1e1);   // Diffusion
+  double D       = params.get("D",       1e-1);   // Diffusion
 
   double t       = params.get("t",       0.0);   // Time
   double T       = params.get("T",       1e8);   // Total simulation time
