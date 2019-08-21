@@ -69,7 +69,7 @@ def main():
     Re_ = np.linspace(args.Re_min, args.Re_max, args.Re_N)
     n_sets = len(Re_)
 
-    for i, Re in enumerate(Re_):
+    for i, Re in enumerate(Re_[rank::size]):
         command = ["../puff",
                    param2str("L", args.L),
                    param2str("N", args.N),
@@ -86,13 +86,14 @@ def main():
                    param2str("dump_pos", args.dump_pos),
                    param2str("verbose", args.verbose),
                    param2str("log_gaps", args.log_gaps),
+                   param2str("log_events", args.log_events),
                    param2str("init_mode", args.init_mode),
                    param2str("stat_intv", args.stat_intv),
                    param2str("dump_intv", args.dump_intv),
                    ]
         for s in range(args.S):
             print("Process {}: Set {} of {}, sample {} of {}.".format(
-                rank, i, n_sets, s, args.S))
+                rank, i*size + rank, n_sets, s, args.S))
             results_folder = os.path.join(
                 "../results",
                 "sweep",
