@@ -1,4 +1,5 @@
 #include "Node.hpp"
+#include <iomanip>
 
 int COUNT = 0;
 
@@ -10,7 +11,7 @@ Node::Node(double x, Queue* queue){
     cout << "Creating node " << this->id << " at x=" << x << "!"  << endl;
   if (this->queue->do_dump_pos()){
     this->file.open(this->queue->get_results_dir() + "/xt_" + to_string(this->id)+ ".dat", ofstream::out);
-    this->file << this->queue->time() << " " << this->x << endl;
+    this->file << this->queue->time() << " " << setprecision(9) << this->x << endl;
   }
   this->queue->increase_size();
 }

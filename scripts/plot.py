@@ -28,9 +28,12 @@ def parse_params(text):
 def parse_args():
     parser = argparse.ArgumentParser(description="Plot")
     parser.add_argument("folder", type=str, help="Folder")
-    parser.add_argument("--style", action="store_true", help="Style.")
+    parser.add_argument("--style", type=str, default=None, help="Style.")
     parser.add_argument("--plotall", action="store_true", help="Plot all.")
-    parser.add_argument("--umean", type=float, help="Mean speed to subtract.")
+    parser.add_argument("--umean", type=float,
+                        help="Mean speed to subtract.")
+    parser.add_argument("--nocircles", action="store_true",
+                        help="No circles")
     return parser.parse_args()
 
 
@@ -96,7 +99,7 @@ def main():
             masked_data = np.ma.MaskedArray(x, mask)
             series[key] = (t, masked_data)
 
-    if args.style:
+    if args.style is None:
         if len(series):
             import colormaps
             keys = np.array(series.keys())
@@ -109,14 +112,15 @@ def main():
                 #cval = scalar_map.to_rgba(key)
                 
                 plt.plot(x, t, color=cols[0], linewidth=.5)
-                if t[0] > 1:
-                    plt.plot(x[0], t[0], 'o', markersize=7,
-                             markeredgewidth=1, markeredgecolor="r",
-                             markerfacecolor="None")
-                if t[-1] < tmax:
-                    plt.plot(x[-1], t[-1], 'o', markersize=7,
-                             markeredgewidth=1, markeredgecolor="k",
-                             markerfacecolor="None")
+                if not args.nocircles:
+                    if t[0] > 1:
+                        plt.plot(x[0], t[0], 'o', markersize=7,
+                                 markeredgewidth=1, markeredgecolor="r",
+                                 markerfacecolor="None")
+                    if t[-1] < tmax:
+                        plt.plot(x[-1], t[-1], 'o', markersize=7,
+                                 markeredgewidth=1, markeredgecolor="k",
+                                 markerfacecolor="None")
             plt.xlim(0, L)
             plt.ylim(0, tmax)
             ax.invert_yaxis()

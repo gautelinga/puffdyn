@@ -51,7 +51,8 @@ def parse_args():
                         help="Statistics interval.")
     parser.add_argument("--dump_intv", type=int, default=1000,
                         help="Dump interval")
-    parser.add_argument("--init_mode", choices=["mf", "random", "equid"],
+    parser.add_argument("--init_mode",
+                        choices=["mf", "random", "equid", "pair"],
                         default="mf", help="Initialization mode.")
     args = parser.parse_args()
     return args

@@ -157,13 +157,14 @@ void Queue::step(const double dt){
   this->t += dt;
   ++this->it;
   Node *n = this->first;
-  double expmllc, l, dx_max, dx, u;
+  double expmllc, l, dx, u;
+  // double dx_max;
   double Pd, Ps;
   double R;
   bool is_first;
   do {
     l = n->dist_upstream();
-    dx_max = n->dist_downstream(); // Usually not necessary to do this twice
+    // dx_max = n->dist_downstream(); // Usually not necessary to do this twice
     expmllc = exp(-l/this->lc);
     u = this->v(expmllc);
     dx = u*dt;
@@ -171,7 +172,7 @@ void Queue::step(const double dt){
       dx += sqrt(D*dt)*gaussrd(e2);
     }
     //dx = max(0., min(dx, l));
-    dx = min(dx, dx_max);
+    //dx = min(dx, dx_max);
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
     Pd = this->decay_rate(expmllc)*dt;
