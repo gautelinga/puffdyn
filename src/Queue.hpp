@@ -86,4 +86,6 @@ private:
   set<double> gaps;
 };
 
+double rand_uniform_unit();
+
 #endif

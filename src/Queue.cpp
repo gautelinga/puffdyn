@@ -157,50 +157,59 @@ void Queue::step(const double dt){
   this->t += dt;
   ++this->it;
   Node *n = this->first;
-  double expmllc, l, dx, u;
+  double expmllc_up, expmllc_down, l_up, l_down, dx, u;
   // double dx_max;
   double Pd, Ps;
-  double R;
+  //double R;
   bool is_first;
+  bool try_decay_first, try_decay, has_decayed, has_split;
+  //bool has_split_or_decayed;
   do {
-    l = n->dist_upstream();
-    // dx_max = n->dist_downstream(); // Usually not necessary to do this twice
-    expmllc = exp(-l/this->lc);
-    u = this->v(expmllc);
+    l_up = n->dist_upstream();
+    l_down = n->dist_downstream(); // Strictly not necessary to do this twice
+    expmllc_up = exp(-l_up/this->lc);
+    expmllc_down = exp(-l_down/this->lc);
+    u = this->v(expmllc_up);
     dx = u*dt;
     if (this->D > 0.0){
       dx += sqrt(D*dt)*gaussrd(e2);
     }
-    //dx = max(0., min(dx, l));
-    //dx = min(dx, dx_max);
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
-    Pd = this->decay_rate(expmllc)*dt;
-    Ps = this->splitting_rate(expmllc)*dt;
-    R = double(rand())/RAND_MAX;
+    Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
+    Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
+    
     is_first = bool(n == this->first);
-    if (R < Pd){
-      if (log_events_flag){
-	this->deaths_file << this->t << " " << n->get_id() << endl;
+    has_decayed = false;
+    has_split = false;
+    try_decay_first = rand() % 2 == 1;
+    for (int k = 0; k < 2; ++k){
+      try_decay = (try_decay_first && k == 0) || (!try_decay_first && k == 1);
+      if (try_decay && !has_split && rand_uniform_unit() < Pd){
+	if (log_events_flag){
+	  this->deaths_file << this->t << " " << n->get_id() << endl;
+	}
+	n = n->decay();
+	if (is_first && n != NULL){
+	  this->set_first(n->prev());
+	}
+	else if (n == NULL){
+	  this->set_first(NULL);
+	}
+	has_decayed = true;
       }
-      n = n->decay();
-      if (is_first && n != NULL){
-        this->set_first(n->prev());
-      }
-      else if (n == NULL){
-        this->set_first(NULL);
+      if (!try_decay && !has_decayed && rand_uniform_unit() < Ps){
+	n = n->split(this->lin);
+	if (log_events_flag){
+	  this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
+	}
+	if (is_first){
+	  this->set_first(n->prev());
+	}
+	has_split = true;
       }
     }
-    else if (R < Pd+Ps){
-      n = n->split(this->lin);
-      if (log_events_flag){
-	this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
-      }
-      if (is_first){
-        this->set_first(n->prev());
-      }
-    }
-    else {
+    if (!has_decayed && !has_split) {
       n = n->next();
     }
   } while (n != this->first);
@@ -266,4 +275,8 @@ void Queue::dump_state(const string outfile) const {
   int N = 0;
   double* li = this->export_list(N);
   list_to_file(N, li, outfile);
+}
+
+double rand_uniform_unit() {
+  return double(rand())/RAND_MAX;
 }
