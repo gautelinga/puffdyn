@@ -53,6 +53,7 @@ int main(int argc, char* argv[]){
   double T       = params.get("T",     1e12);      // Total simulation time
   double dt      = params.get("dt",    1e1);      // Timestep
   double D       = params.get("D",       0.0);       // Diffusion
+  double rho     = params.get("rho",     0.1);    // Density (optional)
   bool do_dump_pos = params.get_bool("dump_pos", true);                 // Dump positions
   string results_folder = params.get("results_folder", "results/0");  // Name
   bool verbose   = params.get_bool("verbose", false);                     // Verbose output
@@ -65,14 +66,24 @@ int main(int argc, char* argv[]){
   srand(time(NULL));
   
   double* li;
-  if (init_mode == "random")
+  if (init_mode == "random"){
     li = initialize_random(N, L);
-  else if (init_mode == "mf")
+  }
+  else if (init_mode == "mf"){
     li = initialize_mf(N, L, lc, alpha_d, beta_d, alpha_s, beta_s);
-  else if (init_mode == "equid")
-    li = initialize_equid(N, L, lc);
-  else if (init_mode == "pair")
+  }
+  else if (init_mode == "equid"){
+    double dist = L/N;
+    li = initialize_equid(N, L, dist);
+  }
+  else if (init_mode == "pair"){
     li = initialize_pair(N, L);
+  }
+  else if (init_mode == "density"){
+    N = int(rho*L/lc);
+    double dist = L/N;
+    li = initialize_equid(N, L, dist);
+  }
   else {
     cout << "Unknown initializing mode." << endl;
     exit(0);

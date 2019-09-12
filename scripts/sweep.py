@@ -37,6 +37,8 @@ def parse_args():
                         help="Control parameter NUM STEPS")
     parser.add_argument("-D", type=float, default=1e-2,
                         help="Diffusion coefficient.")
+    parser.add_argument("-rho", type=float, default=1e-1,
+                        help="Initial puff density.")
     parser.add_argument("-S", type=int, default=1,
                         help="Number of samples per parameter set.")
     parser.add_argument("--verbose", action="store_true",
@@ -52,7 +54,7 @@ def parse_args():
     parser.add_argument("--dump_intv", type=int, default=1000,
                         help="Dump interval")
     parser.add_argument("--init_mode",
-                        choices=["mf", "random", "equid", "pair"],
+                        choices=["mf", "random", "equid", "pair", "density"],
                         default="mf", help="Initialization mode.")
     args = parser.parse_args()
     return args
@@ -84,6 +86,7 @@ def main():
                    param2str("T", args.T),
                    param2str("dt", args.dt),
                    param2str("D", args.D),
+                   param2str("rho", args.rho),
                    param2str("dump_pos", args.dump_pos),
                    param2str("verbose", args.verbose),
                    param2str("log_gaps", args.log_gaps),

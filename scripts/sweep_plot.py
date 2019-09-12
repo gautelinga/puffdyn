@@ -14,6 +14,8 @@ def parse_args():
     parser.add_argument("folder", type=str, help="Folder with data.")
     parser.add_argument("-S", type=int, default=None, help="Samples per R.")
     parser.add_argument("-Re_c", type=float, default=Re_c, help="Overrule R_c")
+    parser.add_argument("--timeavg", action="store_true", help="Perform time average")
+    parser.add_argument("--recompute", action="store_true", help="Recompute temp files")
     args = parser.parse_args()
     return args
 
@@ -42,7 +44,7 @@ def main():
     datasets = dict()
     print("Looking for files.")
     dump_fname = os.path.join(args.folder, "temp_S{}.hdf".format(args.S))
-    if os.path.exists(dump_fname) and False:
+    if os.path.exists(dump_fname) and not args.recompute:
         with h5py.File(dump_fname, "r") as h5f:
             for grp in h5f:
                 datasets[float(grp)] = [np.array(h5f[grp][key])
@@ -71,7 +73,7 @@ def main():
             len_glob = max(len_glob, len(data_loc))
 
     print("len_glob =", len_glob)
-    num_avg = int(len_glob/10)
+    num_avg = int(len_glob/2)
     print("num_avg =", num_avg)
     
     #fig, ax = plt.subfigures()
@@ -81,8 +83,48 @@ def main():
     rho_ = np.zeros(len(Re_))
     rho_var_ = np.zeros(len(Re_))
     t_ = np.zeros(len(Re_))
-    t_var_ = np.zeros(len(Re_))
     rhot = []
+
+    istart = len_glob // 2
+
+    rhodata = []
+    for i, Re in enumerate(Re_):
+        dsets = datasets[Re]
+        # len_min = np.min([len(dset) for dset in dsets])
+
+        rho_S = []
+        num = 0
+        for j, data in enumerate(dsets):
+            if len(data[:, 0]) == len_glob:
+                rho_loc = data[istart:, 2]*l_c/L
+                t_loc = data[istart:, 0]
+
+                rho_S.append(rho_loc.mean())
+                num += 1
+            else:
+                rho_S.append(0)
+                num += 1
+
+        rho_S = np.array(rho_S)
+        if rho_S.min() == 0:
+            rho_S_mean = 0.
+            rho_S_std = 0.
+        else:
+            rho_S_mean = rho_S.mean()
+            rho_S_std = rho_S.std()
+            
+        #plt.plot(rho_S)
+        rhodata.append((Re, rho_S_mean, rho_S_std, num))
+
+    rhodata = np.array(rhodata)
+    plt.figure()
+    plt.errorbar(rhodata[:, 0], rhodata[:, 1], rhodata[:, 2])
+    plt.xlabel("Re")
+    plt.ylabel("rho")
+    plt.show()
+
+    np.savetxt(os.path.join(args.folder, "rhodata.dat"), rhodata)
+    
     for i, Re in enumerate(Re_):
         dsets = datasets[Re]
         len_min = np.min([len(dset) for dset in dsets])
@@ -94,14 +136,14 @@ def main():
             t_list.append(data[:len_min, 0])
             t_loc[j] = data[-1, 0]
             rho_list.append(data[:len_min, 2]*l_c/L)
-            if len(data) < len_glob-num_avg:
-                rho_mean[j] = 0.
-            else:
-                j_start = min(len(data)-1, len_glob-num_avg-1)
-                rho_loc = data[j_start:len(data), 2]
-                rho_mean[j] = np.sum(rho_loc)/float(num_avg)
+            # if len(data) < len_glob-num_avg:
+            #     rho_mean[j] = 0.
+            # else:
+            #     j_start = min(len(data)-1, len_glob-num_avg-1)
+            #     rho_loc = data[j_start:len(data), 2]
+            #     rho_mean[j] = np.sum(rho_loc)/float(num_avg)
         t_[i] = np.mean(t_loc)
-        t_var_[i] = np.var(t_loc)
+        # t_var_[i] = np.var(t_loc)
         if True or np.all(rho_mean > 0.0):
             rho_[i] = np.mean(rho_mean)
             rho_var_[i] = np.var(rho_mean)
@@ -109,42 +151,47 @@ def main():
         rho = np.vstack(tuple(rho_list))
         t_avg = t.mean(0)
         rho_avg = rho.mean(0)
-        rhot.append((Re, t_avg, rho_avg))
+        rho_std = rho.std(0)
+        rhot.append((Re, t_avg, rho_avg, rho_std))
 
     print("Re_c =", args.Re_c)
 
     rho0_ = np.zeros_like(Re_)
     rhoT_ = np.zeros_like(Re_)
-    for i, (Re, t_avg, rho_avg) in enumerate(rhot):
+    rhoT_std = np.zeros_like(Re_)
+    for i, (Re, t_avg, rho_avg, rho_std) in enumerate(rhot):
         rho0_[i] = rho_avg[0]
         if t_avg[-1] < T:
             rhoT_[i] = 0.
+            rhoT_std[i] = 0.
         else:
-            rhoT_[i] = rho_avg[-1]
+            istart = len(rho_avg)//2
+            rhoT_[i] = np.mean(rho_avg[istart:])
+            rhoT_std[i] = np.mean(rho_std[istart:])
     rho_anal = -1./np.log(-(
         alpha_d(Re_)-alpha_s(Re_))/(beta_d(Re_)-beta_s(Re_)))
 
     plt.plot(Re_, rho0_, label="Init")
-    plt.plot(Re_, rhoT_, label="End")
+    plt.errorbar(Re_, rhoT_, yerr=rhoT_std, label="End")
     plt.plot(Re_, rho_anal,
              label="Analytical")
     plt.legend()
     plt.xlabel("$Re$")
     plt.ylabel("$\\rho$")
 
-    plt.figure()
-    plt.plot(Re_, rho0_**(1./beta), label="Init")
-    plt.plot(Re_, rhoT_**(1./beta), label="End")
-    plt.plot(Re_, rho_anal**(1./beta),
-             label="Analytical")
-    plt.legend()
-    plt.xlabel("$Re$")
-    plt.ylabel("$\\rho^{1/\\beta}$")
+    # plt.figure()
+    # plt.plot(Re_, rho0_**(1./beta), label="Init")
+    # plt.plot(Re_, rhoT_**(1./beta), label="End")
+    # plt.plot(Re_, rho_anal**(1./beta),
+    #          label="Analytical")
+    # plt.legend()
+    # plt.xlabel("$Re$")
+    # plt.ylabel("$\\rho^{1/\\beta}$")
     
     plt.show()
     
     plt.figure()
-    for Re, t_avg, rho_avg in rhot:
+    for Re, t_avg, rho_avg, rho_std in rhot:
         #print(len(t_avg), len(rho_avg))
         plt.plot(t_avg, rho_avg)
 
@@ -155,7 +202,7 @@ def main():
     plt.ylabel("$\\rho_t$")
     plt.show()
 
-    for Re, t_avg, rho_avg in rhot:
+    for Re, t_avg, rho_avg, rho_std in rhot:
         t = t_avg[:]
         rho = rho_avg[:]
         abs_eps = abs(Re-Re_c)
