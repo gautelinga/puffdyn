@@ -84,6 +84,10 @@ private:
   bool log_events_flag;
   bool verbose_flag;
   set<double> gaps;
+  double l_cutoff;
+  double ws_inf;
+  double wd_inf;
+  double v_inf;
 };
 
 double rand_uniform_unit();

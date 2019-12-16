@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "io.hpp"
 //#include <boost/filesystem/path.hpp>
@@ -11,6 +12,31 @@
 random_device rd;
 mt19937 e2(rd());
 normal_distribution<double> gaussrd(0.0, 1.0);
+
+typedef unsigned long long int Ullong;
+struct Ranq {
+  Ullong v2;
+  Ranq(Ullong j2) : v2(4101842887655102017LL){
+    v2 ^=j2;
+    v2=int64();
+  }
+  inline Ullong int64() {
+    v2 ^=v2 >> 21; v2 ^=v2<<35;v2 ^=v2>>4;
+    return v2 * 2685821657736338717LL;
+  }
+  inline long double doub() {return 5.42101086242752217E-20*int64();}
+};
+
+long seed = time(0);
+Ranq rq(seed);
+
+double exp256(double x){
+  x = 1.0 + x/256.0;
+  x *= x; x *= x; x *= x; x *= x;
+  x *= x; x *= x; x *= x; x *= x;
+  return x;
+}
+
 
 class Node;
 class Queue;
@@ -35,6 +61,10 @@ Queue::Queue(const string infile,
   int N = 0;
   double* li = list_from_file(N, infile);
   this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
+  this->l_cutoff = 4*lc;
+  this->wd_inf = this->decay_rate(0.0);
+  this->ws_inf = this->splitting_rate(0.0);
+  this->v_inf = this->v(0.0);
 }
 
 Queue::~Queue(){
@@ -163,29 +193,49 @@ void Queue::step(const double dt){
   //double R;
   bool is_first;
   bool try_decay_first, try_decay, has_decayed, has_split;
+
+  double Pd_inf = 1.0-exp256(-this->wd_inf*dt);
+  double Ps_inf = 1.0-exp256(-this->ws_inf*dt);
+  
   //bool has_split_or_decayed;
   do {
     l_up = n->dist_upstream();
+    if (l_up < this->l_cutoff){
+      expmllc_up = exp256(-l_up/this->lc);
+      //u = this->v(expmllc_up);
+      u = this->v(expmllc_up);
+      // Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
+      Pd = 1.-exp256(-this->decay_rate(expmllc_up)*dt);
+    }
+    else {
+      Pd = Pd_inf;
+      u = this->v_inf;
+    }
     l_down = n->dist_downstream(); // Strictly not necessary to do this twice
-    expmllc_up = exp(-l_up/this->lc);
-    expmllc_down = exp(-l_down/this->lc);
-    u = this->v(expmllc_up);
+    if (l_down < this->l_cutoff){
+      expmllc_down = exp256(-l_down/this->lc);
+      // Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
+      Ps = 1.-exp256(-this->splitting_rate(expmllc_down)*dt);
+    }
+    else {
+      Ps = Ps_inf;
+    }
     dx = u*dt;
     if (this->D > 0.0){
-      dx += sqrt(D*dt)*gaussrd(e2);
+      //dx += sqrt(D*dt)*gaussrd(e2);
+      dx += sqrt(D*dt)*2*(2*rq.doub()-1.);
     }
     n->to_move(dx);  // Since it is not quite correct to move immediately
-
-    Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
-    Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
     
     is_first = bool(n == this->first);
     has_decayed = false;
     has_split = false;
-    try_decay_first = rand() % 2 == 1;
+    //try_decay_first = rand() % 2 == 1;
+    try_decay_first = rq.int64() % 2 == 1;
     for (int k = 0; k < 2; ++k){
       try_decay = (try_decay_first && k == 0) || (!try_decay_first && k == 1);
-      if (try_decay && !has_split && rand_uniform_unit() < Pd){
+      // if (try_decay && !has_split && rand_uniform_unit() < Pd){
+      if (try_decay && !has_split && rq.doub() < Pd){
 	if (log_events_flag){
 	  this->deaths_file << this->t << " " << n->get_id() << endl;
 	}
@@ -198,7 +248,8 @@ void Queue::step(const double dt){
 	}
 	has_decayed = true;
       }
-      if (!try_decay && !has_decayed && rand_uniform_unit() < Ps){
+      // if (!try_decay && !has_decayed && rand_uniform_unit() < Ps){
+      if (!try_decay && !has_decayed && rq.doub() < Ps){
 	n = n->split(this->lin);
 	if (log_events_flag){
 	  this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
