@@ -167,17 +167,24 @@ void Queue::step(const double dt){
   do {
     l_up = n->dist_upstream();
     l_down = n->dist_downstream(); // Strictly not necessary to do this twice
+    
     expmllc_up = exp(-l_up/this->lc);
-    expmllc_down = exp(-l_down/this->lc);
     u = this->v(expmllc_up);
+    Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
+    
     dx = u*dt;
     if (this->D > 0.0){
       dx += sqrt(D*dt)*gaussrd(e2);
     }
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
-    Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
-    Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
+    if (l_down > this->lin){
+      expmllc_down = exp(-l_down/this->lc);
+      Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
+    }
+    else {
+      Ps = 0.0;
+    }
     
     is_first = bool(n == this->first);
     has_decayed = false;
@@ -198,7 +205,7 @@ void Queue::step(const double dt){
 	}
 	has_decayed = true;
       }
-      if (!try_decay && !has_decayed && rand_uniform_unit() < Ps){
+      if (!try_decay && Ps > 0.0 && !has_decayed && rand_uniform_unit() < Ps){
 	n = n->split(this->lin);
 	if (log_events_flag){
 	  this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
