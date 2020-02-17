@@ -3,12 +3,16 @@
 
 #include <stdlib.h>
 #include <algorithm>
+#include <string>
+#include <vector>
+#include <utility>
 using namespace std;
 
 
-double* initialize_random(int, double);
-double* initialize_mf(int &, double, double, double, double, double, double);
-double* initialize_equid(int &, double, double);
-double* initialize_pair(int &, double);
+vector<pair<int, double>> initialize_state(string);
+vector<pair<int, double>> initialize_random(int, double);
+vector<pair<int, double>> initialize_mf(int &, double, double, double, double, double, double);
+vector<pair<int, double>> initialize_equid(int &, double, double);
+vector<pair<int, double>> initialize_pair(int &, double);
 
 #endif // __INITIALIZE_H

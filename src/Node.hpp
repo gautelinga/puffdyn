@@ -19,6 +19,7 @@ using namespace std;
 class Node {
 public:
   Node(double, Queue*);
+  Node(double, int, Queue*);
   ~Node();
   void set_next(Node* a){ this->next_node = a; };
   void set_prev(Node* a){ this->prev_node = a; };

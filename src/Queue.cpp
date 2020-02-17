@@ -4,9 +4,11 @@
 #include <sys/stat.h>
 
 #include "io.hpp"
+#include <filesystem>
+#include <utility>
 //#include <boost/filesystem/path.hpp>
 //#include <boost/filesystem/operations.hpp>
-//namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 random_device rd;
 mt19937 e2(rd());
@@ -15,26 +17,32 @@ normal_distribution<double> gaussrd(0.0, 1.0);
 class Node;
 class Queue;
 
-Queue::Queue(const double* li, const int N,
+Queue::Queue(const vector<pair<int, double>> state, const double t,
 	     const double L, const double lc, const double lin, const double v0,
 	     const double alpha_s, const double beta_s,
 	     const double alpha_d, const double beta_d,
              const double D,
 	     const bool do_dump_pos, const bool do_log_events,
-	     const bool verbose, const string results_dir){
-  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
+	     const bool verbose,
+	     const bool clear_all,
+	     const string results_dir){
+  this->init(state, t, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
+	     do_dump_pos, do_log_events, verbose, clear_all, results_dir);
 }
 
 Queue::Queue(const string infile,
+	     const double t,
 	     const double L, const double lc, const double lin, const double v0,
 	     const double alpha_s, const double beta_s,
 	     const double alpha_d, const double beta_d,
              const double D,
 	     const bool do_dump_pos, const bool do_log_events,
-	     const bool verbose, const string results_dir){
-  int N = 0;
-  double* li = list_from_file(N, infile);
-  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
+	     const bool verbose,
+	     const bool clear_all,
+	     const string results_dir){
+  vector<pair<int, double>> state = file_to_state(infile);
+  this->init(state, t, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
+	     do_dump_pos, do_log_events, verbose, clear_all, results_dir);
 }
 
 Queue::~Queue(){
@@ -56,52 +64,46 @@ Queue::~Queue(){
   }
 }
 
-void Queue::init(const double* li, const int N,
+void Queue::init(const vector<pair<int, double>> state,
+		 const double t,
 		 const double L, const double lc, const double lin, const double v0,
 		 const double alpha_s, const double beta_s,
 		 const double alpha_d, const double beta_d,
 		 const double D,
 		 const bool do_dump_pos, const bool do_log_events,
-		 const bool verbose, const string results_dir){
+		 const bool verbose, const bool clear_all,
+		 const string results_dir
+		 ){
   if (verbose) {
     cout << "Creating queue!" << endl;
   }
-  
+
+  this->t = t;
   this->L = L;
   this->dump_pos_flag = do_dump_pos;
   this->log_events_flag = do_log_events;
   this->verbose_flag = verbose;
   this->results_dir = results_dir;
 
-  struct stat sb;
-  if (stat(results_dir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
-    // EXTREMELY DANGEROUS!!!
-    string rm_code_str = "rm -rf " + results_dir;
-    const char* rm_code = rm_code_str.c_str();
-    const int rm_err = system(rm_code);
-    if (rm_err == -1){
-      cout << "Couldn't empty folder!" << endl;
-      exit(0);
-    }
+  if (clear_all && fs::is_directory(results_dir)){
+    std::uintmax_t n_removed = fs::remove_all(results_dir);
+    if (this->verbose())
+      cout << "Removed " << n_removed << " files." << endl;
   }
-  if (this->verbose()){
-    cout << "Creating directory: " << results_dir << endl;
-  }
-  string dir_code_str = "mkdir -p " + results_dir;
-  const char* dir_code = dir_code_str.c_str();
-  const int dir_err = system(dir_code);
-  if (dir_err == -1){
-    cout << "Couldn't create folder!" << endl;
-    exit(0);
+  if (!fs::is_directory(results_dir)){
+    if (this->verbose())
+      cout << "Creating directory: " << results_dir << endl;
+    fs::create_directory(results_dir);
+    fs::create_directory(results_dir + "/checkpoint");
   }
 
-  this->file.open(this->get_results_dir() + "/tdata.dat", ofstream::out);
+  this->file.open(this->get_results_dir() + "/tdata.dat", ofstream::out | ofstream::app);
   if (this->log_events_flag){
-    this->deaths_file.open(this->get_results_dir() + "/deaths.dat", ofstream::out);
-    this->births_file.open(this->get_results_dir() + "/births.dat", ofstream::out);
+    this->deaths_file.open(this->get_results_dir() + "/deaths.dat", ofstream::out | ofstream::app);
+    this->births_file.open(this->get_results_dir() + "/births.dat", ofstream::out | ofstream::app);
   }
   
-  this->load_list(li, N);
+  this->load_state(state);
 
   this->v0 = v0;
   this->lc = lc;
@@ -129,6 +131,22 @@ void Queue::load_list(const double *li, const int N){
   this->first = n_first;
 }
 
+void Queue::load_state(const vector<pair<int, double>> state){
+  Node *n = new Node(state[0].second, state[1].first, this);
+  Node *n_prev, *n_first;
+
+  n_first = n;
+  for (vector<pair<int, double>>::const_iterator it=state.begin(); it != state.end(); it++){
+    n_prev = n;
+    n = new Node(it->second, it->first, this);
+    n->set_prev(n_prev);
+    n_prev->set_next(n);
+  }
+  n->set_next(n_first);
+  n_first->set_prev(n);
+  this->first = n_first;
+}
+
 double* Queue::export_list(int &N) const {
   Node *n = this->first;
   N = this->size();
@@ -140,6 +158,16 @@ double* Queue::export_list(int &N) const {
     n = n->next();
   } while (n != this->first);
   return li;
+}
+
+vector<pair<int, double>> Queue::export_state() const {
+  Node *n = this->first;
+  vector<pair<int, double>> state;
+  do {
+    state.push_back(make_pair(n->get_id(), n->pos()));
+    n = n->next();
+  } while (n != this->first);
+  return state;
 }
 
 void Queue::dump_stats(){
@@ -272,16 +300,14 @@ void Queue::dump_gaps(){
   this->dump_gaps(filename);
 }
 
-void Queue::read_state(const string infile){
-  int N = 0;
-  double* li = list_from_file(N, infile);
-  this->load_list(li, N);
+void Queue::read_state_from_file(const string infile){
+  vector<pair<int, double>> state = file_to_state(infile);
+  this->load_state(state);
 }
 
-void Queue::dump_state(const string outfile) const {
-  int N = 0;
-  double* li = this->export_list(N);
-  list_to_file(N, li, outfile);
+void Queue::dump_state_to_file(const string outfile) const {
+  vector<pair<int, double>> state = this->export_state();
+  state_to_file(state, outfile);
 }
 
 double rand_uniform_unit() {

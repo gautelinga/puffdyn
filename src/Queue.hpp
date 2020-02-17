@@ -21,24 +21,29 @@ using namespace std;
 
 class Queue {
 public:
-  Queue(const double*, const int,
+  Queue(const vector<pair<int, double>>,
+	const double,
 	const double, const double, const double, const double,
 	const double, const double, const double,
 	const double, const double,
-	const bool, const bool, const bool, const string);
+	const bool, const bool, const bool, const bool, const string);
   Queue(const string,
+	const double,
 	const double, const double, const double, const double,
 	const double, const double, const double,
 	const double, const double,
-	const bool, const bool, const bool, const string);
+	const bool, const bool, const bool, const bool, const string);
   ~Queue();
-  void init(const double*, const int,
+  void init(const vector<pair<int, double>>,
+	    const double,
 	    const double, const double, const double, const double,
 	    const double, const double, const double, const double,
-	    const double, const bool, const bool, const bool, const string);
+	    const double, const bool, const bool, const bool, const bool,
+	    const string);
   int size() const { return queue_length; };
   void set_size(int s){ this->queue_length = s; };
   void load_list(const double*, const int);
+  void load_state(const vector<pair<int, double>>);
   void dump_stats();
   void step(double);
   void set_time(const double t) { this->t = t; };
@@ -59,8 +64,9 @@ public:
   int timestep() const { return it; };
   double domain_size() const { return L; };
   double* export_list(int &N) const;
-  void read_state(string infile);
-  void dump_state(string outfile) const;
+  vector<pair<int, double>> export_state() const;
+  void read_state_from_file(string infile);
+  void dump_state_to_file(string outfile) const;
 private:
   Node* first;
   double L;
