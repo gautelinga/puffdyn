@@ -27,11 +27,11 @@ vector<pair<int, double>> initialize_random(int N, double L){
   return list_to_state(N, li);
 }
 
-vector<pair<int, double>> initialize_mf(int &N, double L, double lc,
+vector<pair<int, double>> initialize_mf(double L, double lc,
 			     double alpha_d, double beta_d,
 			     double alpha_s, double beta_s){
   double ell = -lc*log(-(alpha_d-alpha_s)/(beta_d-beta_s));
-  N = int(L/ell);
+  int N = int(L/ell);
   double* li = new double[N];
   ell = L/N;
   double x = 0.5*ell;

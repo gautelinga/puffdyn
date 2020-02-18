@@ -23,7 +23,7 @@ using namespace std;
 bool simulate(Queue &q, double dt, double T, int stat_intv, int dump_intv,
 	      bool do_log_gaps, bool verbose){
   q.dump_stats();
-  do {
+  while (q.size() > 0 && q.time() < T) {
     q.step(dt);
     if (q.timestep() % stat_intv == 0){
       q.dump_stats();
@@ -36,7 +36,7 @@ bool simulate(Queue &q, double dt, double T, int stat_intv, int dump_intv,
         }
       }
     }
-  } while (q.size() > 0 && q.time() < T);
+  };
   return true;
 }
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
     state = initialize_random(N, L);
   }
   else if (init_mode == "mf"){
-    state = initialize_mf(N, L, lc, alpha_d, beta_d, alpha_s, beta_s);
+    state = initialize_mf(L, lc, alpha_d, beta_d, alpha_s, beta_s);
   }
   else if (init_mode == "equid"){
     double dist = L/N;
@@ -98,13 +98,12 @@ int main(int argc, char* argv[]){
   }
 
   // Initialize the queue
-
   Queue q(state,
 	  t, L, lc, lin, v0,
 	  alpha_s, beta_s, alpha_d, beta_d, D,
 	  do_dump_pos, do_log_events, verbose, do_clear_all,
 	  results_folder);
-
+  
   N = state.size();
 
   print_params(L, N, t, T, dt, lc, lin, v0,
@@ -143,7 +142,7 @@ int main(int argc, char* argv[]){
 
   // Do the loop.
   simulate(q, dt, T, stat_intv, dump_intv, do_log_gaps, true);
-
+  
   params.set("t", q.time());
   params.set("N", q.size());
   params.set_bool("clear_all", false);

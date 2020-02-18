@@ -5,6 +5,7 @@
 #include <utility>
 #include <map>
 #include <boost/algorithm/string.hpp>
+#include <iomanip>
 using namespace std;
 
 string bool2string(bool a){
@@ -108,7 +109,7 @@ void state_to_file(const vector<pair<int, double>> state, const string outfile){
   ofstream output(outfile);
   for (vector<pair<int, double>>::const_iterator it = state.begin();
        it != state.end(); it++){
-    output << it->first << " " << it->second << endl;
+    output << it->first << " " << setprecision(9) << it->second << endl;
   }
   output.close();
 }

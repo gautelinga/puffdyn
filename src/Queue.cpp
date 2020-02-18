@@ -132,11 +132,12 @@ void Queue::load_list(const double *li, const int N){
 }
 
 void Queue::load_state(const vector<pair<int, double>> state){
-  Node *n = new Node(state[0].second, state[1].first, this);
+  Node *n = new Node(state[0].second, state[0].first, this);
   Node *n_prev, *n_first;
 
   n_first = n;
-  for (vector<pair<int, double>>::const_iterator it=state.begin(); it != state.end(); it++){
+  for (vector<pair<int, double>>::const_iterator it=state.begin()+1;
+       it != state.end(); it++){
     n_prev = n;
     n = new Node(it->second, it->first, this);
     n->set_prev(n_prev);
@@ -177,7 +178,7 @@ void Queue::dump_stats(){
   do {
     x_sum += n->dump_pos();
     n = n->next();
-  } while(n != this->first);
+  } while (n != this->first);
   this->file << this->time() << " " << x_sum/N << " " << N << endl;
 }
 
