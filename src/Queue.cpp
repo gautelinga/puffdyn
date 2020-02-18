@@ -94,6 +94,10 @@ void Queue::init(const vector<pair<int, double>> state,
     if (this->verbose())
       cout << "Creating directory: " << results_dir << endl;
     fs::create_directory(results_dir);
+  }
+  if (!fs::is_directory(results_dir + "/checkpoint")){
+    if (this->verbose())
+      cout << "Creating directory: " << results_dir + "/checkpoint" << endl;
     fs::create_directory(results_dir + "/checkpoint");
   }
 

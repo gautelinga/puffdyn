@@ -149,7 +149,8 @@ int main(int argc, char* argv[]){
   
   // Write final state
   params.dump(results_folder + "/checkpoint/params.dat");
-  q.dump_state_to_file(results_folder + "/checkpoint/state.dat");
+  if (q.size() > 0)
+    q.dump_state_to_file(results_folder + "/checkpoint/state.dat");
   
   return 0;
 }

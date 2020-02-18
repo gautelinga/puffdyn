@@ -1,19 +1,11 @@
 import argparse
 import numpy as np
-import subprocess
-from mpi4py import MPI
 import os
 from rates import alpha_d, alpha_s, beta_d, beta_s, Re_c, l_c, v_0
-import tempfile
-
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Sweep parameter range")
+    parser = argparse.ArgumentParser("Sweep initialize parameter range")
     parser.add_argument("-L", type=float, default=5000.0,
                         help="System size")
     parser.add_argument("-N", type=int, default=1,
@@ -69,9 +61,8 @@ def main():
     args = parse_args()
 
     Re_ = np.linspace(args.Re_min, args.Re_max, args.Re_N)
-    n_sets = len(Re_)
 
-    for i, Re in enumerate(Re_[rank::size]):
+    for i, Re in enumerate(Re_):
         params = [
             param2str("L", args.L),
             param2str("N", args.N),
@@ -82,6 +73,7 @@ def main():
             param2str("beta_d", beta_d(Re)),
             param2str("alpha_s", alpha_s(Re)),
             param2str("beta_s", beta_s(Re)),
+            param2str("t", 0.0),
             param2str("T", args.T),
             param2str("dt", args.dt),
             param2str("D", args.D),
@@ -95,21 +87,32 @@ def main():
             param2str("dump_intv", args.dump_intv),
         ]
         for s in range(args.S):
-            print("Process {}: Set {} of {}, sample {} of {}.".format(
-                rank, i*size + rank, n_sets, s, args.S))
             results_folder = os.path.join(
-                "../results",
-                "sweep",
-                "L{}_lc{}_lin{}_T{}_dt{}_v0{}_D{}".format(
-                    args.L, args.l_c, args.l_in, args.T,
-                    args.dt, args.v_0, args.D),
+                "results",
+                "sweep_init",
+                "L{}_lc{}_lin{}_dt{}_v0{}_D{}".format(
+                    args.L, args.l_c, args.l_in, args.dt, args.v_0, args.D),
                 "Re{}".format(Re),
-                "{}".format(s))
-            cmd = command + [param2str("results_folder", results_folder)]
-            output = str(subprocess.check_output(cmd)).replace("\\n", "\n")
-            with open(os.path.join(results_folder,
-                                   "output.dat"), "w") as ofile:
-                ofile.write(output)
+                "{}".format(s)
+            )
+            initial_folder = os.path.join("..", results_folder, "initial")
+            if not os.path.exists(initial_folder):
+                os.makedirs(initial_folder)
+            
+            params.append(param2str("results_folder", results_folder))
+            
+            params_str = "\n".join(params)
+            
+            with open(os.path.join(initial_folder,
+                                   "params.dat"), "w") as paramsfile:
+                paramsfile.write(params_str)
+
+            with open(os.path.join(initial_folder,
+                                   "state.dat"), "w") as statefile:
+                x_ = np.linspace(0, args.L, int(np.round(args.L/args.l_in)), endpoint=False)
+                x_ += x_[0]/2
+                for i, xi in enumerate(x_):
+                    statefile.write("{} {}\n".format(i, xi))
 
 
 if __name__ == "__main__":
