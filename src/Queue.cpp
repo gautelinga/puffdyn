@@ -175,6 +175,16 @@ vector<pair<int, double>> Queue::export_state() const {
   return state;
 }
 
+void Queue::full_data_to_file(const string outfile) const {
+  Node* n = this->first;
+  ofstream ofile(outfile);
+  do {
+    ofile << n->get_id() << " " << n->pos() << " " << n->dist_upstream() << " " << n->dist_downstream() << std::endl;
+    n = n->next();
+  } while (n != this->first);
+  ofile.close();
+}
+
 void Queue::dump_stats(){
   Node *n = this->first;
   double x_sum = 0.;
@@ -197,11 +207,20 @@ void Queue::step(const double dt){
   bool is_first;
   bool try_decay_first, try_decay, has_decayed, has_split;
   //bool has_split_or_decayed;
+
+  //do {
+  //  l_up = n->dist_upstream();
+  //  expmllc_up = exp(-l_up/this->lc);
+  //  n->set_expmllc_up(expmllc_up);
+  //  n = n->next();
+  //} while (n != this->first);
+  
   do {
     l_up = n->dist_upstream();
     l_down = n->dist_downstream(); // Strictly not necessary to do this twice
     
     expmllc_up = exp(-l_up/this->lc);
+    // expmllc_up = n->get_expmllc_up();
     u = this->v(expmllc_up);
     Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
     
@@ -212,6 +231,7 @@ void Queue::step(const double dt){
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
     if (l_down > this->lin){
+      //expmllc_down = n->get_expmllc_down();  //
       expmllc_down = exp(-l_down/this->lc);
       Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
     }
@@ -231,11 +251,12 @@ void Queue::step(const double dt){
 	}
 	n = n->decay();
 	if (is_first && n != NULL){
-	  this->set_first(n->prev());
+	  // this->set_first(n->prev());
+	  this->set_first(n);
 	}
-	else if (n == NULL){
-	  this->set_first(NULL);
-	}
+	// else if (n == NULL){
+	//   this->set_first(NULL);
+	// }
 	has_decayed = true;
       }
       if (!try_decay && Ps > 0.0 && !has_decayed && rand_uniform_unit() < Ps){
@@ -243,16 +264,16 @@ void Queue::step(const double dt){
 	if (log_events_flag){
 	  this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
 	}
-	if (is_first){
-	  this->set_first(n->prev());
-	}
+	// if (is_first){
+	//   this->set_first(n->prev());
+	// }
 	has_split = true;
       }
     }
     if (!has_decayed && !has_split) {
       n = n->next();
     }
-  } while (n != this->first);
+  } while (n != NULL && (n != this->first || has_decayed));
   if (n != NULL){
     do {
       n->move();

@@ -52,6 +52,7 @@ public:
   double decay_rate(double) const;
   double splitting_rate(double) const;
   void set_first(Node*);
+  Node* get_first() { return first; };
   void increase_size(){ ++queue_length; };
   void decrease_size(){ --queue_length; };
   string get_results_dir() const { return results_dir; };
@@ -65,6 +66,7 @@ public:
   double domain_size() const { return L; };
   double* export_list(int &N) const;
   vector<pair<int, double>> export_state() const;
+  void full_data_to_file(const string) const;
   void read_state_from_file(string infile);
   void dump_state_to_file(string outfile) const;
 private:

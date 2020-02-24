@@ -3,6 +3,10 @@
 
 int COUNT = 0;
 
+double fmodpos(double x, double L){
+  return fmod(fmod(x, L)+L, L);
+}
+
 Node::Node(double x, Queue* queue){
   this->x = x;
   this->id = COUNT++;
@@ -46,12 +50,9 @@ double Node::dist_upstream() const {
   if (this == this->prev()){
     return L;
   }
-  double x_prev = fmod(this->prev()->x, L);
-  double x = fmod(this->x, L);
-  if (x_prev > x){
-    x_prev -= L;
-  }
-  return x - x_prev;;
+  if (this == this->queue->get_first())
+    return this->x-this->prev()->x+L;
+  return this->x-this->prev()->x;
 }
 
 double Node::dist_downstream() const {
@@ -59,12 +60,9 @@ double Node::dist_downstream() const {
   if (this == this->prev()){
     return L;
   }
-  double x_next = fmod(this->next()->x, L);
-  double x = fmod(this->x, L);
-  if (x > x_next){
-    x_next += L;
-  }
-  return x_next - x;
+  if (this->next() == this->queue->get_first())
+    return this->next()->x-this->x+L;
+  return this->next()->x-this->x;
 }
 
 void Node::to_move(double dx){

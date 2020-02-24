@@ -20,8 +20,18 @@
 using namespace std;
 
 
-bool simulate(Queue &q, double dt, double T, int stat_intv, int dump_intv,
-	      bool do_log_gaps, bool verbose){
+bool simulate(Queue &q, Parameters &params){
+  double dt = params.get("dt", 1e1);
+  double T = params.get("T", 1e12);
+  int stat_intv = params.get("stat_intv", 1);
+  int dump_intv = params.get("dump_intv", 1);
+  int checkpoint_intv = params.get("checkpoint_intv", 1);
+  bool do_log_gaps = params.get_bool("log_gaps", false);
+  bool verbose = true;  // params.get_bool("verbose", false);
+  string results_folder = params.get("results_folder", "results/0");
+  
+  params.set_bool("clear_all", false);
+  
   q.dump_stats();
   while (q.size() > 0 && q.time() < T) {
     q.step(dt);
@@ -34,6 +44,17 @@ bool simulate(Queue &q, double dt, double T, int stat_intv, int dump_intv,
         if (q.timestep() % (stat_intv*dump_intv) == 0){
           q.dump_gaps(q.time());
         }
+      }
+    }
+    if (q.timestep() % checkpoint_intv == 0){
+      params.set("t", q.time());
+      params.set("N", q.size());
+
+      // Write state
+      params.dump(results_folder + "/checkpoint/params.dat");
+      if (q.size() > 0){
+	q.dump_state_to_file(results_folder + "/checkpoint/state.dat");
+	q.full_data_to_file(results_folder + "/checkpoint/fulldata.dat");
       }
     }
   };
@@ -62,6 +83,7 @@ int main(int argc, char* argv[]){
   bool verbose   = params.get_bool("verbose", false);                     // Verbose output
   int stat_intv  = params.get("stat_intv", 100);   // Sample statistics interval
   int dump_intv  = params.get("dump_intv", 1000);  // Dump statistics after so many samples
+  int checkpoint_intv = params.get("checkpoint_intv", 10000);  // Checkpoints interval
   string init_mode = params.get("init_mode", "mf");  // Init mode: 'random', 'mf' or 'equid'
   bool do_log_gaps = params.get_bool("log_gaps", false);  // Log gaps
   bool do_log_events = params.get_bool("log_events", false);  // Log events
@@ -133,6 +155,7 @@ int main(int argc, char* argv[]){
   params.set_bool("verbose", verbose);
   params.set("stat_intv", stat_intv);
   params.set("dump_intv", dump_intv);
+  params.set("checkpoint_intv", checkpoint_intv);
   params.set("init_mode", init_mode);
   params.set_bool("log_gaps", do_log_gaps);
   params.set_bool("log_events", do_log_events);
@@ -141,11 +164,7 @@ int main(int argc, char* argv[]){
   params.dump(results_folder + "/params.dat");
 
   // Do the loop.
-  simulate(q, dt, T, stat_intv, dump_intv, do_log_gaps, true);
-  
-  params.set("t", q.time());
-  params.set("N", q.size());
-  params.set_bool("clear_all", false);
+  simulate(q, params);
   
   // Write final state
   params.dump(results_folder + "/checkpoint/params.dat");
