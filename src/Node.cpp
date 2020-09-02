@@ -3,10 +3,6 @@
 
 int COUNT = 0;
 
-double fmodpos(double x, double L){
-  return fmod(fmod(x, L)+L, L);
-}
-
 Node::Node(double x, Queue* queue){
   this->x = x;
   this->id = COUNT++;
@@ -14,23 +10,7 @@ Node::Node(double x, Queue* queue){
   if (this->queue->verbose())
     cout << "Creating node " << this->id << " at x=" << x << "!"  << endl;
   if (this->queue->do_dump_pos()){
-    this->file.open(this->queue->get_results_dir() + "/xt_" + to_string(this->id)+ ".dat",
-		    ofstream::out | ofstream::app);
-    this->file << this->queue->time() << " " << setprecision(9) << this->x << endl;
-  }
-  this->queue->increase_size();
-}
-
-Node::Node(double x, int id, Queue* queue){
-  this->x = x;
-  this->id = id;
-  COUNT = max(COUNT, id)+1;
-  this->queue = queue;
-  if (this->queue->verbose())
-    cout << "Creating node " << this->id << " at x=" << x << "!"  << endl;
-  if (this->queue->do_dump_pos()){
-    this->file.open(this->queue->get_results_dir() + "/xt_" + to_string(this->id)+ ".dat",
-		    ofstream::out | ofstream::app);
+    this->file.open(this->queue->get_results_dir() + "/xt_" + to_string(this->id)+ ".dat", ofstream::out);
     this->file << this->queue->time() << " " << setprecision(9) << this->x << endl;
   }
   this->queue->increase_size();
@@ -50,9 +30,12 @@ double Node::dist_upstream() const {
   if (this == this->prev()){
     return L;
   }
-  if (this == this->queue->get_first())
-    return this->x-this->prev()->x+L;
-  return this->x-this->prev()->x;
+  double x_prev = fmod(this->prev()->x, L);
+  double x = fmod(this->x, L);
+  if (x_prev > x){
+    x_prev -= L;
+  }
+  return x - x_prev;;
 }
 
 double Node::dist_downstream() const {
@@ -60,9 +43,12 @@ double Node::dist_downstream() const {
   if (this == this->prev()){
     return L;
   }
-  if (this->next() == this->queue->get_first())
-    return this->next()->x-this->x+L;
-  return this->next()->x-this->x;
+  double x_next = fmod(this->next()->x, L);
+  double x = fmod(this->x, L);
+  if (x > x_next){
+    x_next += L;
+  }
+  return x_next - x;
 }
 
 void Node::to_move(double dx){

@@ -4,11 +4,9 @@
 #include <sys/stat.h>
 
 #include "io.hpp"
-#include <filesystem>
-#include <utility>
 //#include <boost/filesystem/path.hpp>
 //#include <boost/filesystem/operations.hpp>
-namespace fs = std::filesystem;
+//namespace fs = boost::filesystem;
 
 random_device rd;
 mt19937 e2(rd());
@@ -17,32 +15,26 @@ normal_distribution<double> gaussrd(0.0, 1.0);
 class Node;
 class Queue;
 
-Queue::Queue(const vector<pair<int, double>> state, const double t,
+Queue::Queue(const double* li, const int N,
 	     const double L, const double lc, const double lin, const double v0,
 	     const double alpha_s, const double beta_s,
 	     const double alpha_d, const double beta_d,
              const double D,
 	     const bool do_dump_pos, const bool do_log_events,
-	     const bool verbose,
-	     const bool clear_all,
-	     const string results_dir){
-  this->init(state, t, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
-	     do_dump_pos, do_log_events, verbose, clear_all, results_dir);
+	     const bool verbose, const string results_dir){
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
 }
 
 Queue::Queue(const string infile,
-	     const double t,
 	     const double L, const double lc, const double lin, const double v0,
 	     const double alpha_s, const double beta_s,
 	     const double alpha_d, const double beta_d,
              const double D,
 	     const bool do_dump_pos, const bool do_log_events,
-	     const bool verbose,
-	     const bool clear_all,
-	     const string results_dir){
-  vector<pair<int, double>> state = file_to_state(infile);
-  this->init(state, t, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
-	     do_dump_pos, do_log_events, verbose, clear_all, results_dir);
+	     const bool verbose, const string results_dir){
+  int N = 0;
+  double* li = list_from_file(N, infile);
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
 }
 
 Queue::~Queue(){
@@ -64,50 +56,52 @@ Queue::~Queue(){
   }
 }
 
-void Queue::init(const vector<pair<int, double>> state,
-		 const double t,
+void Queue::init(const double* li, const int N,
 		 const double L, const double lc, const double lin, const double v0,
 		 const double alpha_s, const double beta_s,
 		 const double alpha_d, const double beta_d,
 		 const double D,
 		 const bool do_dump_pos, const bool do_log_events,
-		 const bool verbose, const bool clear_all,
-		 const string results_dir
-		 ){
+		 const bool verbose, const string results_dir){
   if (verbose) {
     cout << "Creating queue!" << endl;
   }
-
-  this->t = t;
+  
   this->L = L;
   this->dump_pos_flag = do_dump_pos;
   this->log_events_flag = do_log_events;
   this->verbose_flag = verbose;
   this->results_dir = results_dir;
 
-  if (clear_all && fs::is_directory(results_dir)){
-    std::uintmax_t n_removed = fs::remove_all(results_dir);
-    if (this->verbose())
-      cout << "Removed " << n_removed << " files." << endl;
+  struct stat sb;
+  if (stat(results_dir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
+    // EXTREMELY DANGEROUS!!!
+    string rm_code_str = "rm -rf " + results_dir;
+    const char* rm_code = rm_code_str.c_str();
+    const int rm_err = system(rm_code);
+    if (rm_err == -1){
+      cout << "Couldn't empty folder!" << endl;
+      exit(0);
+    }
   }
-  if (!fs::is_directory(results_dir)){
-    if (this->verbose())
-      cout << "Creating directory: " << results_dir << endl;
-    fs::create_directory(results_dir);
+  if (this->verbose()){
+    cout << "Creating directory: " << results_dir << endl;
   }
-  if (!fs::is_directory(results_dir + "/checkpoint")){
-    if (this->verbose())
-      cout << "Creating directory: " << results_dir + "/checkpoint" << endl;
-    fs::create_directory(results_dir + "/checkpoint");
+  string dir_code_str = "mkdir -p " + results_dir;
+  const char* dir_code = dir_code_str.c_str();
+  const int dir_err = system(dir_code);
+  if (dir_err == -1){
+    cout << "Couldn't create folder!" << endl;
+    exit(0);
   }
 
-  this->file.open(this->get_results_dir() + "/tdata.dat", ofstream::out | ofstream::app);
+  this->file.open(this->get_results_dir() + "/tdata.dat", ofstream::out);
   if (this->log_events_flag){
-    this->deaths_file.open(this->get_results_dir() + "/deaths.dat", ofstream::out | ofstream::app);
-    this->births_file.open(this->get_results_dir() + "/births.dat", ofstream::out | ofstream::app);
+    this->deaths_file.open(this->get_results_dir() + "/deaths.dat", ofstream::out);
+    this->births_file.open(this->get_results_dir() + "/births.dat", ofstream::out);
   }
   
-  this->load_state(state);
+  this->load_list(li, N);
 
   this->v0 = v0;
   this->lc = lc;
@@ -135,23 +129,6 @@ void Queue::load_list(const double *li, const int N){
   this->first = n_first;
 }
 
-void Queue::load_state(const vector<pair<int, double>> state){
-  Node *n = new Node(state[0].second, state[0].first, this);
-  Node *n_prev, *n_first;
-
-  n_first = n;
-  for (vector<pair<int, double>>::const_iterator it=state.begin()+1;
-       it != state.end(); it++){
-    n_prev = n;
-    n = new Node(it->second, it->first, this);
-    n->set_prev(n_prev);
-    n_prev->set_next(n);
-  }
-  n->set_next(n_first);
-  n_first->set_prev(n);
-  this->first = n_first;
-}
-
 double* Queue::export_list(int &N) const {
   Node *n = this->first;
   N = this->size();
@@ -165,26 +142,6 @@ double* Queue::export_list(int &N) const {
   return li;
 }
 
-vector<pair<int, double>> Queue::export_state() const {
-  Node *n = this->first;
-  vector<pair<int, double>> state;
-  do {
-    state.push_back(make_pair(n->get_id(), n->pos()));
-    n = n->next();
-  } while (n != this->first);
-  return state;
-}
-
-void Queue::full_data_to_file(const string outfile) const {
-  Node* n = this->first;
-  ofstream ofile(outfile);
-  do {
-    ofile << n->get_id() << " " << n->pos() << " " << n->dist_upstream() << " " << n->dist_downstream() << std::endl;
-    n = n->next();
-  } while (n != this->first);
-  ofile.close();
-}
-
 void Queue::dump_stats(){
   Node *n = this->first;
   double x_sum = 0.;
@@ -192,8 +149,8 @@ void Queue::dump_stats(){
   do {
     x_sum += n->dump_pos();
     n = n->next();
-  } while (n != this->first);
-  this->file << this->time() << " " << x_sum/N << " " << N << endl;
+  } while(n != this->first);
+  this->file << this->time() << "\t" << x_sum/N << "\t" << N << endl;
 }
 
 void Queue::step(const double dt){
@@ -207,23 +164,14 @@ void Queue::step(const double dt){
   bool is_first;
   bool try_decay_first, try_decay, has_decayed, has_split;
   //bool has_split_or_decayed;
-
-  //do {
-  //  l_up = n->dist_upstream();
-  //  expmllc_up = exp(-l_up/this->lc);
-  //  n->set_expmllc_up(expmllc_up);
-  //  n = n->next();
-  //} while (n != this->first);
-  
   do {
     l_up = n->dist_upstream();
     l_down = n->dist_downstream(); // Strictly not necessary to do this twice
-    
+
     expmllc_up = exp(-l_up/this->lc);
-    // expmllc_up = n->get_expmllc_up();
     u = this->v(expmllc_up);
     Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
-    
+
     dx = u*dt;
     if (this->D > 0.0){
       dx += sqrt(D*dt)*gaussrd(e2);
@@ -231,14 +179,13 @@ void Queue::step(const double dt){
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
     if (l_down > this->lin){
-      //expmllc_down = n->get_expmllc_down();  //
       expmllc_down = exp(-l_down/this->lc);
       Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
     }
     else {
       Ps = 0.0;
     }
-    
+
     is_first = bool(n == this->first);
     has_decayed = false;
     has_split = false;
@@ -246,34 +193,33 @@ void Queue::step(const double dt){
     for (int k = 0; k < 2; ++k){
       try_decay = (try_decay_first && k == 0) || (!try_decay_first && k == 1);
       if (try_decay && !has_split && rand_uniform_unit() < Pd){
-	if (log_events_flag){
-	  this->deaths_file << this->t << " " << n->get_id() << endl;
-	}
-	n = n->decay();
-	if (is_first && n != NULL){
-	  // this->set_first(n->prev());
-	  this->set_first(n);
-	}
-	// else if (n == NULL){
-	//   this->set_first(NULL);
-	// }
-	has_decayed = true;
+        if (log_events_flag){
+          this->deaths_file << this->t << " " << n->get_id() << endl;
+        }
+        n = n->decay();
+        if (is_first && n != NULL){
+          this->set_first(n->prev());
+        }
+        else if (n == NULL){
+          this->set_first(NULL);
+        }
+        has_decayed = true;
       }
       if (!try_decay && Ps > 0.0 && !has_decayed && rand_uniform_unit() < Ps){
-	n = n->split(this->lin);
-	if (log_events_flag){
-	  this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
-	}
-	// if (is_first){
-	//   this->set_first(n->prev());
-	// }
-	has_split = true;
+        n = n->split(this->lin);
+        if (log_events_flag){
+          this->births_file << this->t << " " << n->get_id() << " " << n->prev()->get_id() << endl;
+        }
+        if (is_first){
+          this->set_first(n->prev());
+        }
+        has_split = true;
       }
     }
     if (!has_decayed && !has_split) {
       n = n->next();
     }
-  } while (n != NULL && (n != this->first || has_decayed));
+  } while (n != this->first);
   if (n != NULL){
     do {
       n->move();
@@ -326,14 +272,16 @@ void Queue::dump_gaps(){
   this->dump_gaps(filename);
 }
 
-void Queue::read_state_from_file(const string infile){
-  vector<pair<int, double>> state = file_to_state(infile);
-  this->load_state(state);
+void Queue::read_state(const string infile){
+  int N = 0;
+  double* li = list_from_file(N, infile);
+  this->load_list(li, N);
 }
 
-void Queue::dump_state_to_file(const string outfile) const {
-  vector<pair<int, double>> state = this->export_state();
-  state_to_file(state, outfile);
+void Queue::dump_state(const string outfile) const {
+  int N = 0;
+  double* li = this->export_list(N);
+  list_to_file(N, li, outfile);
 }
 
 double rand_uniform_unit() {

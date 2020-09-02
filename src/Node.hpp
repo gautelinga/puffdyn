@@ -19,12 +19,11 @@ using namespace std;
 class Node {
 public:
   Node(double, Queue*);
-  Node(double, int, Queue*);
   ~Node();
-  void set_next(Node* a){ this->next_node = a; };
-  void set_prev(Node* a){ this->prev_node = a; };
-  Node* next() const { return this->next_node; };
-  Node* prev() const { return this->prev_node; };
+  void set_next(Node* a){ this->next_node = a; }
+  void set_prev(Node* a){ this->prev_node = a; }
+  Node* next() const { return this->next_node; }
+  Node* prev() const { return this->prev_node; }
   double dist_upstream() const;
   double dist_downstream() const;
   Node* decay();
@@ -33,9 +32,9 @@ public:
   void to_move(double);
   void move();
   double dump_pos();
-  double pos() const { return this->x; };
-  Queue* get_queue() const { return queue; };
-  int get_id() const { return this->id; };
+  double pos() const { return this->x; }
+  Queue* get_queue() const { return queue; }
+  int get_id() const { return this->id; }
 private:
   double x;
   double dx = 0.;

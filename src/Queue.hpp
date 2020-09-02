@@ -21,54 +21,46 @@ using namespace std;
 
 class Queue {
 public:
-  Queue(const vector<pair<int, double>>,
-	const double,
+  Queue(const double*, const int,
 	const double, const double, const double, const double,
 	const double, const double, const double,
 	const double, const double,
-	const bool, const bool, const bool, const bool, const string);
+	const bool, const bool, const bool, const string);
   Queue(const string,
-	const double,
 	const double, const double, const double, const double,
 	const double, const double, const double,
 	const double, const double,
-	const bool, const bool, const bool, const bool, const string);
+	const bool, const bool, const bool, const string);
   ~Queue();
-  void init(const vector<pair<int, double>>,
-	    const double,
+  void init(const double*, const int,
 	    const double, const double, const double, const double,
 	    const double, const double, const double, const double,
-	    const double, const bool, const bool, const bool, const bool,
-	    const string);
-  int size() const { return queue_length; };
-  void set_size(int s){ this->queue_length = s; };
+	    const double, const bool, const bool, const bool, const string);
+  int size() const { return queue_length; }
+  void set_size(int s){ this->queue_length = s; }
   void load_list(const double*, const int);
-  void load_state(const vector<pair<int, double>>);
   void dump_stats();
   void step(double);
-  void set_time(const double t) { this->t = t; };
+  void set_time(const double t) { this->t = t; }
   double time() const { return this->t; }
   double v(double) const;
   double decay_rate(double) const;
   double splitting_rate(double) const;
   void set_first(Node*);
-  Node* get_first() { return first; };
-  void increase_size(){ ++queue_length; };
-  void decrease_size(){ --queue_length; };
-  string get_results_dir() const { return results_dir; };
-  bool do_dump_pos() const { return dump_pos_flag; };
+  void increase_size(){ ++queue_length; }
+  void decrease_size(){ --queue_length; }
+  string get_results_dir() const { return results_dir; }
+  bool do_dump_pos() const { return dump_pos_flag; }
   void log_gaps();
   void dump_gaps(string);
   void dump_gaps(double);
   void dump_gaps();
-  bool verbose() const { return verbose_flag; };
-  int timestep() const { return it; };
-  double domain_size() const { return L; };
+  bool verbose() const { return verbose_flag; }
+  int timestep() const { return it; }
+  double domain_size() const { return L; }
   double* export_list(int &N) const;
-  vector<pair<int, double>> export_state() const;
-  void full_data_to_file(const string) const;
-  void read_state_from_file(string infile);
-  void dump_state_to_file(string outfile) const;
+  void read_state(string infile);
+  void dump_state(string outfile) const;
 private:
   Node* first;
   double L;

@@ -9,21 +9,6 @@ using namespace std;
 
 
 Parameters::Parameters(int argc, char* argv[]){
-  parse_args(argc, argv);
-  string restart_folder = get("restart_folder", "");
-  if (restart_folder != ""){
-    parse_file(restart_folder + "/params.dat");
-    parse_args(argc, argv);
-    set("state_file", restart_folder + "/state.dat");
-    set_bool("clear_all", false);
-  }
-}
-
-Parameters::Parameters(string infile){
-  parse_file(infile);
-}
-
-void Parameters::parse_args(int argc, char* argv[]){
   size_t found;
   string argstr;
   for (int iarg=1; iarg < argc; ++iarg){
@@ -35,11 +20,10 @@ void Parameters::parse_args(int argc, char* argv[]){
   }
 }
 
-void Parameters::parse_file(string infile){
+Parameters::Parameters(string infile){
   ifstream input(infile);
   if (!input){
     cout << "File " << infile <<" doesn't exist." << endl;
-    cout << "Continuing..." << endl;
     return;
   }
   size_t found;
@@ -109,7 +93,7 @@ bool Parameters::get_bool(string key, bool default_value) const {
 
 void Parameters::dump() const {
   for (map<string, string>::const_iterator it=params.begin(); it != params.end(); ++it){
-    cout << it->first << ": " << it->second << endl;
+    cout << it->first << ":\t" << it->second << endl;
   }
 }
 
@@ -117,6 +101,6 @@ void Parameters::dump(string outfile) const {
   ofstream output(outfile);
   for (map<string, string>::const_iterator it=params.begin();
        it != params.end(); ++it){
-    output << it->first << "=" << it->second << endl;
+    output << it->first << "=\t" << it->second << endl;
   }
 }
