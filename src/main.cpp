@@ -82,6 +82,7 @@ int main(int argc, char* argv[]){
   string importFile = params.get("importFile","");
   bool do_log_gaps = params.get_bool("log_gaps", false);  // Log gaps
   bool do_log_events = params.get_bool("log_events", false);  // Log events
+  bool tome_mod = params.get_bool("tome_mod", false);  // Tomé modification for finite size scaling
 
   // Decay rate from the experiment (imposing lc=12);
   //double Ainf_d = 0.0058904;
@@ -146,7 +147,10 @@ int main(int argc, char* argv[]){
   // params.dump();
   // Initialize the queue
 
-  Queue q(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_folder);
+  Queue q(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events,
+          tome_mod,
+          verbose,
+          results_folder);
 
   print_params(L, N,
 	       T, dt,

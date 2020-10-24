@@ -16,25 +16,27 @@ class Node;
 class Queue;
 
 Queue::Queue(const double* li, const int N,
-	     const double L, const double lc, const double lin, const double v0,
-	     const double alpha_s, const double beta_s,
-	     const double alpha_d, const double beta_d,
+             const double L, const double lc, const double lin, const double v0,
+             const double alpha_s, const double beta_s,
+             const double alpha_d, const double beta_d,
              const double D,
-	     const bool do_dump_pos, const bool do_log_events,
-	     const bool verbose, const string results_dir){
-  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
+             const bool do_dump_pos, const bool do_log_events,
+             const bool tome_mod,
+             const bool verbose, const string results_dir){
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
 }
 
 Queue::Queue(const string infile,
-	     const double L, const double lc, const double lin, const double v0,
-	     const double alpha_s, const double beta_s,
-	     const double alpha_d, const double beta_d,
+             const double L, const double lc, const double lin, const double v0,
+             const double alpha_s, const double beta_s,
+             const double alpha_d, const double beta_d,
              const double D,
-	     const bool do_dump_pos, const bool do_log_events,
-	     const bool verbose, const string results_dir){
+             const bool do_dump_pos, const bool do_log_events,
+             const bool tome_mod,
+             const bool verbose, const string results_dir){
   int N = 0;
   double* li = list_from_file(N, infile);
-  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, verbose, results_dir);
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
 }
 
 Queue::~Queue(){
@@ -57,21 +59,23 @@ Queue::~Queue(){
 }
 
 void Queue::init(const double* li, const int N,
-		 const double L, const double lc, const double lin, const double v0,
-		 const double alpha_s, const double beta_s,
-		 const double alpha_d, const double beta_d,
-		 const double D,
-		 const bool do_dump_pos, const bool do_log_events,
-		 const bool verbose, const string results_dir){
+                 const double L, const double lc, const double lin, const double v0,
+                 const double alpha_s, const double beta_s,
+                 const double alpha_d, const double beta_d,
+                 const double D,
+                 const bool do_dump_pos, const bool do_log_events,
+                 const bool tome_mod,
+                 const bool verbose, const string results_dir){
   if (verbose) {
     cout << "Creating queue!" << endl;
   }
-  
+
   this->L = L;
   this->dump_pos_flag = do_dump_pos;
   this->log_events_flag = do_log_events;
   this->verbose_flag = verbose;
   this->results_dir = results_dir;
+  this->tome_mod_flag = tome_mod;
 
   struct stat sb;
   if (stat(results_dir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
@@ -100,7 +104,7 @@ void Queue::init(const double* li, const int N,
     this->deaths_file.open(this->get_results_dir() + "/deaths.dat", ofstream::out);
     this->births_file.open(this->get_results_dir() + "/births.dat", ofstream::out);
   }
-  
+
   this->load_list(li, N);
 
   this->v0 = v0;
@@ -192,7 +196,7 @@ void Queue::step(const double dt){
     try_decay_first = rand() % 2 == 1;
     for (int k = 0; k < 2; ++k){
       try_decay = (try_decay_first && k == 0) || (!try_decay_first && k == 1);
-      if (try_decay && !has_split && rand_uniform_unit() < Pd){
+      if (try_decay && !has_split && !(this->tome_mod_flag && this->size()==1) && rand_uniform_unit() < Pd){
         if (log_events_flag){
           this->deaths_file << this->t << " " << n->get_id() << endl;
         }
