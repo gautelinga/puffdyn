@@ -22,6 +22,8 @@ elif [ $3 == "3" ]; then
     ./puff L=$2 dt=10 D=0.02 T=9e9 stat_intv=1000000 Re=$1 tome_mod=true results_folder=results_tome/L$2_Re$1_3 init_mode=fromFile importFile=results_tome/L$2_Re$1_2/puffsPosition_final.dat
 elif [ $3 == "4" ]; then
     ./puff L=$2 dt=10 D=0.02 T=9e10 stat_intv=1000000 Re=$1 tome_mod=true results_folder=results_tome/L$2_Re$1_4 init_mode=fromFile importFile=results_tome/L$2_Re$1_3/puffsPosition_final.dat
+elif [ $3 == "5" ]; then
+    ./puff L=$2 dt=10 D=0.02 T=9e11 stat_intv=10000000 Re=$1 tome_mod=true results_folder=results_tome/L$2_Re$1_5 init_mode=fromFile importFile=results_tome/L$2_Re$1_4/puffsPosition_final.dat
 else
     echo "Third argument is missing or invalid."
 fi
