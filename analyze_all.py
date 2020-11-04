@@ -32,4 +32,5 @@ for subfolder in subfolders:
             m4 = np.mean(data[:, 2]**4)
             out[L][Re] = np.array([N, m1, m2, m4])
 
-pickle.dump(out, open(args.outfile, "w"))
+f = open(args.outfile, "wb")
+pickle.dump(out, f)
