@@ -83,6 +83,7 @@ int main(int argc, char* argv[]){
   bool do_log_gaps = params.get_bool("log_gaps", false);  // Log gaps
   bool do_log_events = params.get_bool("log_events", false);  // Log events
   bool tome_mod = params.get_bool("tome_mod", false);  // Tomé modification for finite size scaling
+  double rate_amplification = params.get("rate_amplification", 1.0);  // Number to scale the rates by to accelerate simulations
 
   // Decay rate from the experiment (imposing lc=12);
   //double Ainf_d = 0.0058904;
@@ -116,7 +117,7 @@ int main(int argc, char* argv[]){
   double beta_s  = d_s*Re + b_s;
 
   srand(time(NULL));
-  
+
   double* li;
   if (init_mode == "random"){
     li = initialize_random(N, L);
@@ -147,17 +148,19 @@ int main(int argc, char* argv[]){
   // params.dump();
   // Initialize the queue
 
-  Queue q(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events,
+  Queue q(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
+          rate_amplification,
+          do_dump_pos, do_log_events,
           tome_mod,
           verbose,
           results_folder);
 
   print_params(L, N,
-	       T, dt,
-           lc, lin, v0, Re,
-	       alpha_d, beta_d, alpha_s, beta_s,
-	       D,
-	       do_dump_pos, verbose, init_mode,
+               T, dt,
+               lc, lin, v0, Re,
+               alpha_d, beta_d, alpha_s, beta_s,
+               D, rate_amplification,
+               do_dump_pos, verbose, init_mode,
                do_log_gaps, do_log_events, results_folder);
 
   // Do the loop.
@@ -170,6 +173,6 @@ int main(int argc, char* argv[]){
   cout << "================================================" << endl;
   cout << "=============== Simulation done ================" << endl;
   cout << "================================================" << endl;
-  
+
   return 0;
 }

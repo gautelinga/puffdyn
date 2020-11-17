@@ -9,15 +9,16 @@ string bool2string(bool a){
 }
 
 void print_params(double L, int N,
-		  double T, double dt,
-          double lc, double lin, double v0, double Re,
+                  double T, double dt,
+                  double lc, double lin, double v0, double Re,
                   double alpha_d, double beta_d, 
-		  double alpha_s, double beta_s,
-		  double D,
+                  double alpha_s, double beta_s,
+                  double D,
+                  double rate_amplification,
                   bool do_dump_pos, bool verbose,
-		  string init_mode,
+                  string init_mode,
                   bool do_log_gaps,
-		  bool do_log_events,
+                  bool do_log_events,
                   string results_folder){
   cout << "================================================" << endl;
   cout << "PARAMETERS:" << endl;
@@ -35,6 +36,7 @@ void print_params(double L, int N,
   cout << " alpha_s = " << alpha_s << endl;
   cout << " beta_s  = " << beta_s << endl;
   cout << " D       = " << D << endl;
+  cout << " rate_amplification = " << rate_amplification << endl;
   cout << "------------------------------------------------" << endl;
   cout << " dump_pos       = " << bool2string(do_dump_pos) << endl;
   cout << " results_folder = " << results_folder << endl;

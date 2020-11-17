@@ -19,24 +19,28 @@ Queue::Queue(const double* li, const int N,
              const double L, const double lc, const double lin, const double v0,
              const double alpha_s, const double beta_s,
              const double alpha_d, const double beta_d,
-             const double D,
+             const double D, const double rate_amplification,
              const bool do_dump_pos, const bool do_log_events,
              const bool tome_mod,
              const bool verbose, const string results_dir){
-  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
+             rate_amplification,
+             do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
 }
 
 Queue::Queue(const string infile,
              const double L, const double lc, const double lin, const double v0,
              const double alpha_s, const double beta_s,
              const double alpha_d, const double beta_d,
-             const double D,
+             const double D, const double rate_amplification,
              const bool do_dump_pos, const bool do_log_events,
              const bool tome_mod,
              const bool verbose, const string results_dir){
   int N = 0;
   double* li = list_from_file(N, infile);
-  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D, do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
+  this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
+             rate_amplification,
+             do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
 }
 
 Queue::~Queue(){
@@ -62,7 +66,7 @@ void Queue::init(const double* li, const int N,
                  const double L, const double lc, const double lin, const double v0,
                  const double alpha_s, const double beta_s,
                  const double alpha_d, const double beta_d,
-                 const double D,
+                 const double D, const double rate_amplification,
                  const bool do_dump_pos, const bool do_log_events,
                  const bool tome_mod,
                  const bool verbose, const string results_dir){
@@ -115,6 +119,7 @@ void Queue::init(const double* li, const int N,
   this->alpha_d = alpha_d;
   this->beta_d = beta_d;
   this->D = D;
+  this->rate_amplification = rate_amplification;
 }
 
 void Queue::load_list(const double *li, const int N){
@@ -238,11 +243,11 @@ double Queue::v(const double expmllc) const {
 }
 
 double Queue::decay_rate(const double expmllc) const {
-  return exp(-exp(this->alpha_d + this->beta_d*expmllc));
+  return exp(-exp(this->alpha_d + this->beta_d*expmllc))*this->rate_amplification;
 }
 
 double Queue::splitting_rate(const double expmllc) const {
-  return exp(-exp(this->alpha_s + this->beta_s*expmllc));
+  return exp(-exp(this->alpha_s + this->beta_s*expmllc))*this->rate_amplification;
 }
 
 void Queue::set_first(Node* n){

@@ -24,18 +24,18 @@ public:
   Queue(const double*, const int,
         const double, const double, const double, const double,
         const double, const double, const double,
-        const double, const double, const bool,
+        const double, const double, const double, const bool,
         const bool, const bool, const bool, const string);
   Queue(const string,
         const double, const double, const double, const double,
         const double, const double, const double,
-        const double, const double, const bool,
+        const double, const double, const double, const bool,
         const bool, const bool, const bool, const string);
   ~Queue();
   void init(const double*, const int,
             const double, const double, const double, const double,
             const double, const double, const double, const double,
-            const double, const bool, const bool, const bool,
+            const double, const double, const bool, const bool, const bool,
             const bool, const string);
   int size() const { return queue_length; }
   void set_size(int s){ this->queue_length = s; }
@@ -86,6 +86,7 @@ private:
   bool verbose_flag;
   bool tome_mod_flag;
   set<double> gaps;
+  double rate_amplification;
 };
 
 double rand_uniform_unit();
