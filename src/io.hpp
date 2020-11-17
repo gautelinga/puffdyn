@@ -26,6 +26,8 @@ void print_params(double, int,
                   string,
                   bool,
                   bool,
+                  bool,
+                  bool,
                   string);
 double* list_from_file(int &N, const string infile);
 void list_to_file(const int &N, const double* li, const string outfile);

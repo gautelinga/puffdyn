@@ -21,11 +21,11 @@ Queue::Queue(const double* li, const int N,
              const double alpha_d, const double beta_d,
              const double D, const double rate_amplification,
              const bool do_dump_pos, const bool do_log_events,
-             const bool tome_mod,
+             const bool tome_mod, const bool step_mod,
              const bool verbose, const string results_dir){
   this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
              rate_amplification,
-             do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
+             do_dump_pos, do_log_events, tome_mod, step_mod, verbose, results_dir);
 }
 
 Queue::Queue(const string infile,
@@ -34,13 +34,13 @@ Queue::Queue(const string infile,
              const double alpha_d, const double beta_d,
              const double D, const double rate_amplification,
              const bool do_dump_pos, const bool do_log_events,
-             const bool tome_mod,
+             const bool tome_mod, const bool step_mod,
              const bool verbose, const string results_dir){
   int N = 0;
   double* li = list_from_file(N, infile);
   this->init(li, N, L, lc, lin, v0, alpha_s, beta_s, alpha_d, beta_d, D,
              rate_amplification,
-             do_dump_pos, do_log_events, tome_mod, verbose, results_dir);
+             do_dump_pos, do_log_events, tome_mod, step_mod, verbose, results_dir);
 }
 
 Queue::~Queue(){
@@ -68,7 +68,7 @@ void Queue::init(const double* li, const int N,
                  const double alpha_d, const double beta_d,
                  const double D, const double rate_amplification,
                  const bool do_dump_pos, const bool do_log_events,
-                 const bool tome_mod,
+                 const bool tome_mod, const bool step_mod,
                  const bool verbose, const string results_dir){
   if (verbose) {
     cout << "Creating queue!" << endl;
@@ -80,6 +80,7 @@ void Queue::init(const double* li, const int N,
   this->verbose_flag = verbose;
   this->results_dir = results_dir;
   this->tome_mod_flag = tome_mod;
+  this->step_mod_flag = step_mod;
 
   struct stat sb;
   if (stat(results_dir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
@@ -177,9 +178,19 @@ void Queue::step(const double dt){
     l_up = n->dist_upstream();
     l_down = n->dist_downstream(); // Strictly not necessary to do this twice
 
-    expmllc_up = exp(-l_up/this->lc);
+    if (!this->step_mod_flag){
+      expmllc_up = exp(-l_up/this->lc);
+      expmllc_down = exp(-l_down/this->lc);
+    }
+    else {
+      expmllc_up = 0.;
+      expmllc_down = 0.;
+    }
     u = this->v(expmllc_up);
     Pd = 1.-exp(-this->decay_rate(expmllc_up)*dt);
+    if (l_up < this->lc){
+      Pd = 1.0;
+    }
 
     dx = u*dt;
     if (this->D > 0.0){
@@ -188,7 +199,6 @@ void Queue::step(const double dt){
     n->to_move(dx);  // Since it is not quite correct to move immediately
 
     if (l_down > this->lin){
-      expmllc_down = exp(-l_down/this->lc);
       Ps = 1.-exp(-this->splitting_rate(expmllc_down)*dt);
     }
     else {

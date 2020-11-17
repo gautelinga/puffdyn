@@ -19,6 +19,8 @@ void print_params(double L, int N,
                   string init_mode,
                   bool do_log_gaps,
                   bool do_log_events,
+                  bool tome_mod,
+                  bool step_mod,
                   string results_folder){
   cout << "================================================" << endl;
   cout << "PARAMETERS:" << endl;
@@ -44,6 +46,15 @@ void print_params(double L, int N,
   cout << " init_mode      = " << init_mode << endl;
   cout << " log_gaps       = " << bool2string(do_log_gaps) << endl;
   cout << " log_events     = " << bool2string(do_log_events) << endl;
+  cout << " tome_mod       = " << bool2string(tome_mod) << endl;
+  cout << " step_mod       = " << bool2string(step_mod) << endl;
+  cout << "================================================" << endl;
+  cout << " Timescales" << endl;
+  cout << "----------------------------------------------- " << endl;
+  cout << " tau^inf_s      = " << 1./rate_amplification * exp(exp(alpha_s)) << endl;
+  cout << " tau^inf_d      = " << 1./rate_amplification * exp(exp(alpha_d)) << endl;
+  cout << " tau_D          = " << L*L/D << endl;
+  cout << " tau_v0         = " << lc/v0 << endl;
   cout << "================================================" << endl;
 
   ofstream ofile;
@@ -60,12 +71,15 @@ void print_params(double L, int N,
   ofile << "alpha_s=\t" << alpha_s << endl;
   ofile << "beta_s=\t" << beta_s << endl;
   ofile << "D=\t" << D << endl;
+  ofile << "rate_amplification=" << rate_amplification << endl;
   ofile << "dump_pos=\t" << bool2string(do_dump_pos) << endl;
   ofile << "results_folder=\t" << results_folder << endl;
   ofile << "verbose=\t" << bool2string(verbose) << endl;
   ofile << "init_mode=\t" << init_mode << endl;
   ofile << "log_gaps=\t" << bool2string(do_log_gaps) << endl;
   ofile << "log_events=\t" << bool2string(do_log_events) << endl;
+  ofile << "tome_mod=\t" << bool2string(tome_mod) << endl;
+  ofile << "step_mod=\t" << bool2string(step_mod) << endl;
   ofile.close();
 }
 
