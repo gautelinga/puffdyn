@@ -1,6 +1,6 @@
 import numpy as np
 
-part1 = "./runLta"
+part1 = "./runLta.sh"
 Re_ = list(np.linspace(2040, 2100, 61))
 L_ = [5e3, 1e4, 2e4, 4e4, 8e4]
 rate_amp = 1000.0
