@@ -9,6 +9,6 @@ stages = 3
 ofile = open("parallel_params_ta.txt", "w")
 for Re in Re_:
     for L in L_:
-        string = "{} {} {} {}\n".format(part1, Re, L, rate_amp, stages)
+        string = "{} {} {} {} {}\n".format(part1, Re, L, rate_amp, stages)
         ofile.write(string)
 ofile.close()
